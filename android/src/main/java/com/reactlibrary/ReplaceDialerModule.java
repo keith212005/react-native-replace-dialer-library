@@ -66,8 +66,8 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @ReactMethod
     public void isDefaultDialer(Callback myCallback) {
 
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) {
-            myCallback.invoke(true);
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R) {
+            myCallback.invoke(false);
             return;
         }
 
@@ -86,10 +86,6 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         intent.putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, this.mContext.getPackageName());
         this.mContext.startActivityForResult(intent, RC_DEFAULT_PHONE, new Bundle());
         myCallback.invoke(true);
-        // startActivityForResult(intent, REQUEST_CODE_SET_DEFAULT_DIALER); //Different
-        // code
-        // Huawei/ honor : ??? manual ??? startActivityForResult(new
-        // Intent(android.provider.Settings.ACTION_SETTINGS), 0);
     }
 
     @ReactMethod
@@ -102,10 +98,20 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         myCallback.invoke(phoneNumber);
     }
 
+    @ReactMethod
+    public void endCall(Callback myCallback) {
+//        Activity activity = getCurrentActivity();
+//        if (activity != null) {
+//          Intent intent = new Intent(this, CallActivity.class);
+//          intent.putExtra("Call Status", "end call");
+//          this.mContext.startActivity(intent);
+//          activity.finish();
+//        }
+    }
+
 
     @Override
     public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-
         return false;
     }
 }

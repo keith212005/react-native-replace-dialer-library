@@ -2,15 +2,16 @@ package com.example;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.telecom.Call;
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.widget.Toast;
+import androidx.annotation.RequiresApi;
 import com.facebook.react.PackageList;
-import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.ReactRootView;
+import com.facebook.react.bridge.Callback;
 import com.facebook.react.common.LifecycleState;
 import com.facebook.react.modules.core.DefaultHardwareBackBtnHandler;
 import com.facebook.soloader.SoLoader;
@@ -41,9 +42,12 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
         // The string here (e.g. "MyReactNativeApp") has to match
         // the string in AppRegistry.registerComponent() in index.js
         mReactRootView.startReactApplication(mReactInstanceManager, "example", null);
-
         setContentView(mReactRootView);
+    }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void endCall(Callback myCallback) {
+        new OngoingCall().hangup();
     }
 
     public static void start(Context context, Call call) {
@@ -54,7 +58,7 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
 
     @Override
     public void invokeDefaultOnBackPressed() {
-
+        Toast.makeText(this, "back pressed", Toast.LENGTH_SHORT).show();
     }
 
     @Override

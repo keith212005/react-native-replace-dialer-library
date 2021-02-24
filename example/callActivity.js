@@ -4,11 +4,15 @@ import {name as appName} from './app.json';
 import React, {Component} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
 import {CustomButton, image} from '@src';
+import ReplaceDialer from 'react-native-replace-dialer';
 
 export default class CallActivity extends Component {
   onPressHangUp() {
     //end call here
     console.log('hangup pressed...');
+    ReplaceDialer.endCall((message) => {
+      console.log(message);
+    });
   }
 
   render() {
