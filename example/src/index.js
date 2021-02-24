@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import ReplaceDialer from 'react-native-replace-dialer';
 
-export default class App extends Component<{}> {
+export default class AppContainer extends Component<{}> {
   state = {
     phoneNumber: '666',
   };
@@ -41,7 +41,6 @@ export default class App extends Component<{}> {
     const {phoneNumber} = this.state;
     ReplaceDialer.callPhoneNumber(phoneNumber, (message) => {
       console.log(message);
-      Alert.alert(message);
     });
   }
 
@@ -89,3 +88,6 @@ const styles = StyleSheet.create({
     padding: 10,
   },
 });
+
+export * from '@components';
+export * from '@constants';

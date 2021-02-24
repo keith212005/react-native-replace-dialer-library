@@ -58,7 +58,7 @@
                   </intent-filter>
               </service>
       <!-- ReplaceDialer Service -->
-        <activity android:name=".CallActivity" />
+       <activity android:name=".CallActivity" />
     </application>
 
 </manifest>
