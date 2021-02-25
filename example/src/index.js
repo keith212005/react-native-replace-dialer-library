@@ -7,7 +7,16 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  Linking,
 } from 'react-native';
+
+import {
+  check,
+  PERMISSIONS,
+  RESULTS,
+  checkMultiple,
+  requestMultiple,
+} from 'react-native-permissions';
 import ReplaceDialer from 'react-native-replace-dialer';
 
 export default class AppContainer extends Component<{}> {
@@ -15,32 +24,70 @@ export default class AppContainer extends Component<{}> {
     phoneNumber: '666',
   };
   componentDidMount() {
-    // ReplaceDialer.sampleMethod('Testing', 123, (message) => {
-    //   this.setState({
-    //     status: 'native callback received',
-    //     message,
-    //   });
-    // });
-
     ReplaceDialer.isDefaultDialer((data) => {
-      if (data) console.log('Is ALREADY default dialer.');
-      else {
+      console.log('isDefaultDialer>>', data);
+      if (data) {
+        console.log('Is ALREADY default dialer.');
+      } else {
         console.log('Is NOT default dialer, try to set.');
         ReplaceDialer.setDefaultDialer((data) => {
+          console.log('setDefaultDialer>>', data);
           if (data) {
             console.log('Default dialer sucessfully set.');
           } else {
             console.log('Default dialer NOT set');
           }
         });
+        this.checkPermissions().then((statuses) => {});
       }
+    });
+  }
+
+  requestPermission() {
+    return new Promise(function (resolve, reject) {
+      requestMultiple([PERMISSIONS.ANDROID.CALL_PHONE]).then((statuses) => {
+        resolve(statuses);
+      });
+    });
+  }
+
+  checkPermissions() {
+    return new Promise(function (resolve, reject) {
+      checkMultiple([PERMISSIONS.ANDROID.CALL_PHONE]).then((statuses) => {
+        resolve(statuses);
+      });
     });
   }
 
   onPressCall() {
     const {phoneNumber} = this.state;
-    ReplaceDialer.callPhoneNumber(phoneNumber, (message) => {
-      console.log(message);
+    this.checkPermissions().then((statuses) => {
+      console.log('statussesssss>>', statuses);
+      switch (statuses['android.permission.CALL_PHONE']) {
+        case RESULTS.GRANTED:
+          ReplaceDialer.callPhoneNumber(phoneNumber, (message) => {
+            console.log(message);
+          });
+          break;
+        case RESULTS.BLOCKED:
+          Alert.alert(
+            'Error',
+            'Please allow this app the call permission in settings.',
+            [
+              {
+                text: 'OK',
+                onPress: () => Linking.openSettings(),
+              },
+            ],
+          );
+          break;
+        case RESULTS.DENIED:
+          this.requestPermission();
+          break;
+        case RESULTS.UNAVIALABLE:
+          Alert.alert('Error', 'Call feature is not avaiable on this device.');
+          break;
+      }
     });
   }
 

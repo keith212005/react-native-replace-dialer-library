@@ -9,7 +9,7 @@ import ReplaceDialer from 'react-native-replace-dialer';
 export default class CallActivity extends Component {
   onPressHangUp() {
     //end call here
-    console.log('hangup pressed...');
+    console.log('hangup pressed.....');
     ReplaceDialer.endCall((message) => {
       console.log(message);
     });

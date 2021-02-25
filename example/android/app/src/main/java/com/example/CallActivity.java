@@ -58,7 +58,7 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
 
     @Override
     public void invokeDefaultOnBackPressed() {
-        Toast.makeText(this, "back pressed", Toast.LENGTH_SHORT).show();
+
     }
 
     @Override
