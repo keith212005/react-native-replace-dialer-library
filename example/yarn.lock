@@ -5611,6 +5611,11 @@ react-is@^17.0.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.1.tgz#5b3531bd76a645a4c9fb6e693ed36419e3301339"
   integrity sha512-NAnt2iGDXohE5LI7uBnLnqvLQMtzhkiAOLXTmv+qnF9Ky7xAPcX8Up/xWIhxvLVGJvuLiNc4xQLtuqDRzb4fSA==
 
+react-native-call-state@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/react-native-call-state/-/react-native-call-state-1.0.4.tgz#7832c580ac2be825039a247c1c7fadcecfac5a14"
+  integrity sha512-n+wX9RLPJBR96h1omkqYCydosM41IR0Nluw7f7HPsYo+bW4ZzPJGMBb0V25y+XIWt7z4rbHz1654TwIXJj8UKw==
+
 react-native-permissions@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/react-native-permissions/-/react-native-permissions-3.0.0.tgz#d9d107700741d41f8392f202f35a61f481fb0e68"

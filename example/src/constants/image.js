@@ -11,4 +11,8 @@ export const image = {
     'https://toppng.com/uploads/preview/bluetooth-icon-symbol-vector-bluetooth-black-and-white-1156287565558ed5hzlni.png',
   speaker:
     'https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Speaker_Icon.svg/600px-Speaker_Icon.svg.png',
+  endCallButton:
+    'https://play-lh.googleusercontent.com/AJdc5MZScZb4Yk6tx_6gjfLReztRaHFujar2CUcnsyf24RAwUW9yLbsAb7h2ZLrpLQ',
+  recieveCallButton:
+    'https://freepngimg.com/thumb/web_design/57169-6-call-button-picture-free-hd-image.png',
 };

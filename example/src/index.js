@@ -21,7 +21,7 @@ import ReplaceDialer from 'react-native-replace-dialer';
 
 export default class AppContainer extends Component<{}> {
   state = {
-    phoneNumber: '666',
+    phoneNumber: '9429046200',
   };
   componentDidMount() {
     ReplaceDialer.isDefaultDialer((data) => {
@@ -91,6 +91,10 @@ export default class AppContainer extends Component<{}> {
     });
   }
 
+  onChangeText = (value) => {
+    this.setState({phoneNumber: value});
+  };
+
   render() {
     const {phoneNumber} = this.state;
     return (
@@ -100,6 +104,7 @@ export default class AppContainer extends Component<{}> {
           style={styles.input}
           keyboardType="numeric"
           value={phoneNumber}
+          onChangeText={(value) => this.onChangeText(value)}
         />
         <TouchableOpacity
           style={styles.callBtn}

@@ -2,18 +2,93 @@ import {AppRegistry} from 'react-native';
 import {name as appName} from './app.json';
 
 import React, {Component} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  DeviceEventEmitter,
+} from 'react-native';
 import {CustomButton, image} from '@src';
 import ReplaceDialer from 'react-native-replace-dialer';
 
+import CallState from 'react-native-call-state';
+
 export default class CallActivity extends Component {
-  onPressHangUp() {
-    //end call here
-    console.log('hangup pressed.....');
-    ReplaceDialer.endCall((message) => {
-      console.log(message);
+  constructor(props) {
+    super(props);
+    this.state = {
+      connected: false,
+      callType: '',
+    };
+    this.startListenerTapped();
+  }
+
+  // call state start
+  startListenerTapped() {
+    CallState.startListener();
+    DeviceEventEmitter.addListener('callStateUpdated', (data) => {
+      console.log('Call state updated>>', data);
+      var event = data.state;
+
+      if (
+        event === 'Connected' ||
+        event === 'Incoming' ||
+        event === 'Dialing' ||
+        event === 'Offhook'
+      ) {
+        this.setState({connected: true, callType: event});
+      } else {
+        this.setState({connected: false, callType: ''});
+      }
     });
   }
+
+  //Call end
+  endCall() {
+    ReplaceDialer.disconnectCall();
+    this.props.navigation.pop();
+  }
+
+  incomingView = () => {
+    return (
+      <View
+        style={{
+          width: '100%',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          padding: 50,
+        }}>
+        <TouchableOpacity style={{flexDirection: 'column'}} onPress={() => {}}>
+          <Image
+            style={styles.receiveCall}
+            source={{uri: image.recieveCallButton}}
+          />
+          <Text style={{textAlign: 'center'}}>Accept</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={this.endCall}>
+          <Image style={styles.endCall} source={{uri: image.endCallButton}} />
+          <Text style={{textAlign: 'center'}}>Decline</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  callAnsweredView = () => {
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+        }}>
+        <TouchableOpacity onPress={this.endCall}>
+          <Image style={styles.endCall} source={{uri: image.endCallButton}} />
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   render() {
     return (
@@ -29,15 +104,12 @@ export default class CallActivity extends Component {
           <CustomButton name="Mute" imageUri={image.mute} />
           <CustomButton name="Keypad" imageUri={image.keypad} />
         </View>
-        <TouchableOpacity onPress={this.onPressHangUp}>
-          <Image
-            style={styles.endCall}
-            source={{
-              uri:
-                'https://play-lh.googleusercontent.com/AJdc5MZScZb4Yk6tx_6gjfLReztRaHFujar2CUcnsyf24RAwUW9yLbsAb7h2ZLrpLQ',
-            }}
-          />
-        </TouchableOpacity>
+        {this.incomingView()}
+        {/*
+        {this.state.callType == 'Incoming'
+          ? this.incomingView()
+          : this.callAnsweredView()}
+          */}
       </View>
     );
   }
@@ -45,10 +117,15 @@ export default class CallActivity extends Component {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     alignItems: 'center',
   },
   endCall: {
-    height: '32%',
+    height: '30%',
+    aspectRatio: 1,
+  },
+  receiveCall: {
+    height: '26%',
     aspectRatio: 1,
   },
   calling: {
