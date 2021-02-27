@@ -59,7 +59,6 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         this.mContext = context;
         audioManager = (AudioManager) this.mContext.getSystemService(Context.AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
-
     }
 
     @Override
@@ -103,7 +102,6 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     @ReactMethod
     public void callPhoneNumber(String phoneNumber, Callback myCallback) {
-
         PermissionAwareActivity activity = (PermissionAwareActivity) getCurrentActivity();
         if (activity == null) {
             // Handle null case
@@ -207,6 +205,15 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         }
         tm.acceptRingingCall();
     }
+
+    @ReactMethod
+    public void closeCurrentView() {
+        mContext.getCurrentActivity().finish();
+    }
+
+
+
+
 
 
 }

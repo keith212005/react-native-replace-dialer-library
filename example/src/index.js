@@ -8,7 +8,10 @@ import {
   TouchableOpacity,
   Alert,
   Linking,
+  Image,
 } from 'react-native';
+
+import {KeypadView, image} from '@src';
 
 import {
   check,
@@ -19,9 +22,11 @@ import {
 } from 'react-native-permissions';
 import ReplaceDialer from 'react-native-replace-dialer';
 
+import {responsiveWidth, responsiveHeight, responsiveFonts} from '@resources';
+
 export default class AppContainer extends Component<{}> {
   state = {
-    phoneNumber: '9724767351',
+    phoneNumber: '',
     speakerStatus: false,
   };
   componentDidMount() {
@@ -92,26 +97,49 @@ export default class AppContainer extends Component<{}> {
     });
   }
 
-  onChangeText = (value) => {
-    this.setState({phoneNumber: value});
+  handleKeypadPress = (value) => {
+    console.log(value);
+    this.setState((prevState) => ({
+      phoneNumber: prevState.phoneNumber.concat(value),
+    }));
   };
+
+  onPressClear = () => {};
 
   render() {
     const {phoneNumber} = this.state;
     return (
       <View style={styles.container}>
-        <Text>Enter Phone Number</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          value={phoneNumber}
-          onChangeText={(value) => this.onChangeText(value)}
+        <View>
+          <Text style={styles.input}>{this.state.phoneNumber}</Text>
+        </View>
+
+        <KeypadView
+          onKeypadPress={(value) => {
+            this.handleKeypadPress(value);
+          }}
         />
-        <TouchableOpacity
-          style={styles.callBtn}
-          onPress={() => this.onPressCall()}>
-          <Text style={styles.callText}>Call</Text>
-        </TouchableOpacity>
+
+        <View
+          style={{
+            width: '100%',
+            flexDirection: 'row',
+            justifyContent: 'center',
+          }}>
+          <TouchableOpacity
+            style={{flex: 6}}
+            onPress={() => this.onPressCall()}>
+            <Image
+              style={styles.callBtn}
+              source={{uri: image.recieveCallButton}}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{flex: 4}}
+            onPress={() => this.onPressClear()}>
+            <Image style={styles.clearBtn} source={{uri: image.clear_symbol}} />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -125,20 +153,35 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5FCFF',
   },
   input: {
+    marginTop: responsiveHeight(25),
+    width: responsiveWidth(90),
     borderWidth: 1,
-    borderColor: 'gray',
+    borderColor: 'lightgray',
     borderRadius: 5,
-    width: '90%',
+    fontSize: responsiveFonts(35),
+    textAlign: 'center',
+    padding: 10,
+    color: 'gray',
   },
   callBtn: {
-    borderWidth: 2,
-    borderColor: 'green',
-    borderRadius: 5,
+    aspectRatio: 1,
+    height: '28%',
+    alignSelf: 'flex-end',
+  },
+  clearBtn: {
     marginTop: 10,
+    aspectRatio: 1,
+    height: '15%',
+    alignSelf: 'center',
   },
   callText: {
     fontSize: 18,
     padding: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    width: '100%',
   },
 });
 

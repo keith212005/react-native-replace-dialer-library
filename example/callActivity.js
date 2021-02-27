@@ -10,7 +10,6 @@ import {
   Image,
   DeviceEventEmitter,
   SafeAreaView,
-  BackHandler,
   TouchableHighlight,
 } from 'react-native';
 import {CustomButton, CallTimer, image} from '@src';
@@ -30,41 +29,12 @@ export default class CallActivity extends Component {
       bluetoothName: 'Bluetooth',
       speakerOn: false,
       microphone: false,
-      showTimer: false,
-
-      timerStart: false,
-      stopwatchStart: false,
-      totalDuration: 90000,
-      timerReset: false,
-      stopwatchReset: false,
+      pause: false,
     };
     this.startListenerTapped();
     ReplaceDialer.getBluetoothName((name) => {
       this.setState({bluetoothName: name});
     });
-  }
-
-  toggleTimer() {
-    this.setState({timerStart: !this.state.timerStart, timerReset: false});
-  }
-
-  resetTimer() {
-    this.setState({timerStart: false, timerReset: true});
-  }
-
-  toggleStopwatch() {
-    this.setState({
-      stopwatchStart: !this.state.stopwatchStart,
-      stopwatchReset: false,
-    });
-  }
-
-  resetStopwatch() {
-    this.setState({stopwatchStart: false, stopwatchReset: true});
-  }
-
-  getFormattedTime(time) {
-    this.currentTime = time;
   }
 
   // call state start
@@ -82,7 +52,9 @@ export default class CallActivity extends Component {
         this.setState({connected: true, callType: event});
       } else {
         this.setState({connected: false, callType: ''});
-        BackHandler.exitApp();
+        if (event === 'Disconnected') {
+          ReplaceDialer.closeCurrentView();
+        }
       }
     });
   }
@@ -152,19 +124,26 @@ export default class CallActivity extends Component {
   };
 
   render() {
-    const {speakerOn, microphone, showTimer} = this.state;
+    const {speakerOn, microphone, pause, showTimer, callType} = this.state;
     return (
       <SafeAreaView style={styles.container}>
+        {/* Show timer when user pick up call */}
         {showTimer ? (
           <CallTimer />
         ) : (
           <Text style={styles.calling}>Calling...</Text>
         )}
+
         <Text style={styles.calling}>{this.state.phoneNumber}</Text>
         <View style={styles.row}>
           <CustomButton
             name="Add"
             imageUri={image.plus_black}
+            imageStyle={{height: '23%'}}
+          />
+          <CustomButton
+            name="Pause"
+            imageUri={pause ? image.pause_black : image.pause_gray}
             imageStyle={{height: '23%'}}
           />
           <CustomButton
@@ -197,11 +176,10 @@ export default class CallActivity extends Component {
         </View>
 
         {/*
-
         {this.incomingView()}
         */}
 
-        {this.state.callType == 'Incoming'
+        {callType === 'Incoming' || callType === ''
           ? this.incomingView()
           : this.callAnsweredView()}
       </SafeAreaView>
@@ -239,8 +217,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
   },
 });
-
-const handleTimerComplete = () => alert('custom completion function');
 
 const options = {
   container: {

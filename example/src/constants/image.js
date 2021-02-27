@@ -9,6 +9,9 @@ export const image = {
   bluetooth_gray: 'bluetooth_gray',
   speaker_black: 'speaker_black',
   speaker_gray: 'speaker_gray',
+  pause_black: 'pause_black',
+  pause_gray: 'pause_gray',
+  clear_symbol: 'clear_symbol_black',
   endCallButton:
     'https://docs.counterpath.com/docs/CollabUG/Resources/Images/UG/AndroidRetail/icons/end_And.png',
   recieveCallButton:
