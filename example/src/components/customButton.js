@@ -1,13 +1,13 @@
 import React, {Component} from 'react';
-import {TouchableOpacity, Text, StyleSheet, Image} from 'react-native';
+import {TouchableOpacity, Text, StyleSheet, Image, View} from 'react-native';
 
 export default class CustomButton extends Component {
   render() {
-    const {name, imageUri, onPress} = this.props;
+    const {name, imageUri, onPress, imageStyle} = this.props;
     return (
-      <TouchableOpacity style={styles.container} onPress={onPress}>
+      <TouchableOpacity style={styles.button} onPress={onPress}>
         <Image
-          style={[styles.plusImage]}
+          style={[styles.image, imageStyle]}
           source={{
             uri: imageUri,
           }}
@@ -19,16 +19,16 @@ export default class CustomButton extends Component {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  button: {
+    justifyContent: 'center',
     alignItems: 'center',
+    padding: 15,
   },
-  plusImage: {
-    height: '23%',
+  image: {
     aspectRatio: 1,
-    borderWidth: 1,
   },
   name: {
     fontSize: 12,
+    color: 'gray',
   },
 });

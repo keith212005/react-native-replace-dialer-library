@@ -21,7 +21,7 @@ import ReplaceDialer from 'react-native-replace-dialer';
 
 export default class AppContainer extends Component<{}> {
   state = {
-    phoneNumber: '666',
+    phoneNumber: '9724767351',
     speakerStatus: false,
   };
   componentDidMount() {

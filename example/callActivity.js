@@ -9,11 +9,16 @@ import {
   TouchableOpacity,
   Image,
   DeviceEventEmitter,
+  SafeAreaView,
+  BackHandler,
+  TouchableHighlight,
 } from 'react-native';
-import {CustomButton, image} from '@src';
+import {CustomButton, CallTimer, image} from '@src';
 import ReplaceDialer from 'react-native-replace-dialer';
 
 import CallState from 'react-native-call-state';
+import CountDown from 'react-native-countdown-component';
+import {Stopwatch, Timer} from 'react-native-stopwatch-timer';
 
 export default class CallActivity extends Component {
   constructor(props) {
@@ -23,11 +28,43 @@ export default class CallActivity extends Component {
       callType: '',
       phoneNumber: '',
       bluetoothName: 'Bluetooth',
+      speakerOn: false,
+      microphone: false,
+      showTimer: false,
+
+      timerStart: false,
+      stopwatchStart: false,
+      totalDuration: 90000,
+      timerReset: false,
+      stopwatchReset: false,
     };
     this.startListenerTapped();
     ReplaceDialer.getBluetoothName((name) => {
       this.setState({bluetoothName: name});
     });
+  }
+
+  toggleTimer() {
+    this.setState({timerStart: !this.state.timerStart, timerReset: false});
+  }
+
+  resetTimer() {
+    this.setState({timerStart: false, timerReset: true});
+  }
+
+  toggleStopwatch() {
+    this.setState({
+      stopwatchStart: !this.state.stopwatchStart,
+      stopwatchReset: false,
+    });
+  }
+
+  resetStopwatch() {
+    this.setState({stopwatchStart: false, stopwatchReset: true});
+  }
+
+  getFormattedTime(time) {
+    this.currentTime = time;
   }
 
   // call state start
@@ -45,27 +82,17 @@ export default class CallActivity extends Component {
         this.setState({connected: true, callType: event});
       } else {
         this.setState({connected: false, callType: ''});
-        ReplaceDialer.closeCurrentView();
+        BackHandler.exitApp();
       }
     });
   }
 
-  //Call end
-  endCall() {
-    ReplaceDialer.disconnectCall();
-    this.props.navigation.pop();
-  }
-
   incomingView = () => {
     return (
-      <View
-        style={{
-          width: '100%',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          padding: 50,
-        }}>
-        <TouchableOpacity style={{flexDirection: 'column'}} onPress={() => {}}>
+      <View style={styles.incomingViewContainer}>
+        <TouchableOpacity
+          style={{flexDirection: 'column'}}
+          onPress={() => this.handleAcceptCall()}>
           <Image
             style={styles.receiveCall}
             source={{uri: image.recieveCallButton}}
@@ -95,65 +122,104 @@ export default class CallActivity extends Component {
     );
   };
 
-  handleSpeaker() {
-    console.log('speaker clicked');
+  handleSpeaker = () => {
+    const {speakerOn} = this.state;
+    this.setState({speakerOn: !speakerOn});
     ReplaceDialer.toggleSpeakerOnOff();
-  }
-  handleMic() {
-    console.log('mic clicked');
-    ReplaceDialer.toggleMicOnOff();
-  }
+  };
 
-  handleBluetooth() {
+  handleMic = () => {
+    const {microphone} = this.state;
+    this.setState({microphone: !microphone});
+    ReplaceDialer.toggleMicOnOff();
+  };
+
+  handleBluetooth = () => {
     ReplaceDialer.toggleBluetoothOnOff();
-  }
+  };
+
+  // Answer Call
+  handleAcceptCall = () => {
+    console.log('accept call pressed');
+    ReplaceDialer.acceptCall();
+    this.setState({showTimer: true});
+  };
+
+  //Call end
+  endCall = () => {
+    ReplaceDialer.disconnectCall();
+    this.setState({showTimer: false});
+  };
 
   render() {
+    const {speakerOn, microphone, showTimer} = this.state;
     return (
-      <View style={styles.container}>
-        <Text style={styles.calling}>Calling...</Text>
+      <SafeAreaView style={styles.container}>
+        {showTimer ? (
+          <CallTimer />
+        ) : (
+          <Text style={styles.calling}>Calling...</Text>
+        )}
         <Text style={styles.calling}>{this.state.phoneNumber}</Text>
-        <View style={{flexDirection: 'row', marginTop: 200}}>
-          <CustomButton name="Add" imageUri={image.add} />
+        <View style={styles.row}>
+          <CustomButton
+            name="Add"
+            imageUri={image.plus_black}
+            imageStyle={{height: '23%'}}
+          />
           <CustomButton
             name={this.state.bluetoothName}
-            imageUri={image.bluetooth}
+            imageUri={image.bluetooth_gray}
+            imageStyle={{height: '23%'}}
             onPress={this.handleBluetooth}
           />
         </View>
-        <View style={{flexDirection: 'row'}}>
+        <View style={styles.row}>
           <CustomButton
             name="Speaker"
-            imageUri={image.speaker}
+            imageUri={speakerOn ? image.speaker_black : image.speaker_gray}
+            imageStyle={{height: '23%'}}
             onPress={this.handleSpeaker}
           />
+
           <CustomButton
             name="Mute"
-            imageUri={image.mute}
+            imageUri={microphone ? image.mic_gray : image.mic_black}
+            imageStyle={{height: '23%'}}
             onPress={this.handleMic}
           />
-          <CustomButton name="Keypad" imageUri={image.keypad} />
+
+          <CustomButton
+            name="Keypad"
+            imageUri={image.keypad_black}
+            imageStyle={{height: '23%'}}
+          />
         </View>
+
+        {/*
+
+        {this.incomingView()}
+        */}
 
         {this.state.callType == 'Incoming'
           ? this.incomingView()
           : this.callAnsweredView()}
-      </View>
+      </SafeAreaView>
     );
   }
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   endCall: {
-    height: '30%',
+    height: '28%',
     aspectRatio: 1,
   },
   receiveCall: {
-    height: '26%',
+    height: '28%',
     aspectRatio: 1,
   },
   calling: {
@@ -161,6 +227,33 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: 'gray',
   },
+  row: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+  },
+  incomingViewContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+  },
 });
+
+const handleTimerComplete = () => alert('custom completion function');
+
+const options = {
+  container: {
+    backgroundColor: '#000',
+    padding: 5,
+    borderRadius: 5,
+    width: 220,
+  },
+  text: {
+    fontSize: 30,
+    color: '#FFF',
+    marginLeft: 7,
+  },
+};
 
 AppRegistry.registerComponent(appName, () => CallActivity);

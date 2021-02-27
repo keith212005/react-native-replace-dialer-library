@@ -82,20 +82,50 @@ class StateListener extends PhoneStateListener {
         this.activity = activity;
     }
 
+
+    //Incoming call-  goes from IDLE to RINGING when it rings, to OFFHOOK when it's answered, to IDLE when its hung up
+    //Outgoing call-  goes from IDLE to OFFHOOK when it dials out, to IDLE when hung up
     @Override
     public void onCallStateChanged(int state, String incomingNumber) {
 
+        int lastState = TelephonyManager.CALL_STATE_IDLE;
+        boolean isIncoming = false;
+
         super.onCallStateChanged(state, incomingNumber);
+        if(lastState == state){
+            //No change, debounce extras
+            return;
+        }
         switch (state) {
             case TelephonyManager.CALL_STATE_RINGING:
+                // on incoming call started
                 Log.d("kcall1",""+state+incomingNumber);
+                isIncoming = true;
                 break;
             case TelephonyManager.CALL_STATE_OFFHOOK:
+                // on outgoing call started
                 Log.d("kcall2 (2)",""+state+incomingNumber);
+                if(lastState != TelephonyManager.CALL_STATE_RINGING){
+                    isIncoming = false;
+                }
                 break;
             case TelephonyManager.CALL_STATE_IDLE:
+                // went to idle this is end of call. What type depends on previous states
                 Log.d("kcall3 (0)",""+state+incomingNumber);
+                if(lastState == TelephonyManager.CALL_STATE_RINGING){
+                    //Ring but no pickup-  a miss
+                    Log.d("kcall missed call","");
+                    activity.finish();
+                }
+                else if(isIncoming==true){
+                    Log.d("kcall","incoming call ended.");
+                }
+                else{
+                    Log.d("kcall","outgoing call ended.");
+                    activity.finish();
+                }
                 break;
         }
+        lastState = state;
     }
-};
+}

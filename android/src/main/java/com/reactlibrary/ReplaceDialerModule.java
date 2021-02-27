@@ -28,7 +28,9 @@ import com.facebook.react.modules.core.PermissionListener;
 
 import android.os.IBinder;
 import android.telecom.TelecomManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -49,6 +51,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     // for default dialer
     AudioManager audioManager;
+    TelecomManager telecomManager;
     private static final int RC_DEFAULT_PHONE = 3289;
 
     public ReplaceDialerModule(ReactApplicationContext context) {
@@ -56,6 +59,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         this.mContext = context;
         audioManager = (AudioManager) this.mContext.getSystemService(Context.AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
+
     }
 
     @Override
@@ -100,7 +104,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @ReactMethod
     public void callPhoneNumber(String phoneNumber, Callback myCallback) {
 
-      PermissionAwareActivity activity = (PermissionAwareActivity) getCurrentActivity();
+        PermissionAwareActivity activity = (PermissionAwareActivity) getCurrentActivity();
         if (activity == null) {
             // Handle null case
         }
@@ -108,7 +112,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         Uri uri = Uri.parse("tel:" + phoneNumber.trim());
         Intent intent = new Intent(Intent.ACTION_CALL, uri);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra("phone_number",phoneNumber);
+        intent.putExtra("phone_number", phoneNumber);
         this.mContext.startActivity(intent);
         myCallback.invoke(phoneNumber);
     }
@@ -139,57 +143,69 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
                         success = tm.endCall();
                     }
                     Log.d("TAG", "disconnectCall: 5");
-                   Log.d("TAG", "disconnectCall: " + success);
-                   // success == true if call was terminated.
-               }
-           }
+                    Log.d("TAG", "disconnectCall: " + success);
+                    // success == true if call was terminated.
+                }
+            }
             mContext.getCurrentActivity().finish();
-       } catch (Exception e) {
-           e.printStackTrace();
-           Toast.makeText(mContext , "FATAL ERROR: could not connect to telephony subsystem", Toast.LENGTH_LONG).show();
-       }
-   }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(mContext, "FATAL ERROR: could not connect to telephony subsystem", Toast.LENGTH_LONG).show();
+        }
+    }
 
-   // Turn speaker on/off
-   @ReactMethod
-   public void toggleSpeakerOnOff(){
+    // Turn speaker on/off
+    @ReactMethod
+    public void toggleSpeakerOnOff() {
         audioManager.setSpeakerphoneOn(audioManager.isSpeakerphoneOn() ? false : true);
-   }
+    }
 
-   // Turn mic on/off
-   @ReactMethod
-   public void toggleMicOnOff(){
+    // Turn mic on/off
+    @ReactMethod
+    public void toggleMicOnOff() {
         audioManager.setMicrophoneMute(audioManager.isMicrophoneMute() ? false : true);
-   }
+    }
 
     // Retun the name of the connected device
-   @ReactMethod
-   public void getBluetoothName(Callback callback){
-       BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-       Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-       if (pairedDevices.size() > 0) {
-           for (BluetoothDevice device : pairedDevices) {
-               callback.invoke(device.getName());
-           }
-       }
-   }
-
-   @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-   @ReactMethod
-    public void toggleBluetoothOnOff() {
-       BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-       Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-       if (pairedDevices.size() > 0) {
-           for (BluetoothDevice device : pairedDevices) {
-               String name = device.getName();
-
-           }
-       }
-   }
-
     @ReactMethod
-    public void closeCurrentView() {
-        mContext.getCurrentActivity().finish();
+    public void getBluetoothName(Callback callback) {
+        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+        if (pairedDevices.size() > 0) {
+            for (BluetoothDevice device : pairedDevices) {
+                callback.invoke(device.getName());
+            }
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    @ReactMethod
+    public void toggleBluetoothOnOff() {
+        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+        if (pairedDevices.size() > 0) {
+            for (BluetoothDevice device : pairedDevices) {
+                String name = device.getName();
+
+            }
+        }
+    }
+
+    // Accept incoming call
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    @ReactMethod
+    public void acceptCall() {
+        TelecomManager tm = (TelecomManager) mContext
+                .getSystemService(Context.TELECOM_SERVICE);
+
+        if (tm == null) {
+            throw new NullPointerException("tm == null");
+        }
+
+        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ANSWER_PHONE_CALLS) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        tm.acceptRingingCall();
     }
 
 
