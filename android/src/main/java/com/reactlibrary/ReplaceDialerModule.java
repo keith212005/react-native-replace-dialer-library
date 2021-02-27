@@ -8,7 +8,12 @@ import com.facebook.react.bridge.Callback;
 import android.Manifest;
 import android.app.Activity;
 import android.app.role.RoleManager;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
@@ -29,26 +34,28 @@ import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Set;
 
 import static android.Manifest.permission.CALL_PHONE;
 
 public class ReplaceDialerModule extends ReactContextBaseJavaModule implements PermissionListener {
 
     private final ReactApplicationContext mContext;
-    private static Callback setCallback;
 
     // for default dialer
-    private TelecomManager telecomManager;
+    AudioManager audioManager;
     private static final int RC_DEFAULT_PHONE = 3289;
-    private static final int RC_PERMISSION = 3810;
-    private static final int PERMISSION_REQUEST_CODE = 200;
-
-    private static final int REQUEST_CODE_SET_DEFAULT_DIALER = 123;
 
     public ReplaceDialerModule(ReactApplicationContext context) {
         super(context);
         this.mContext = context;
+        audioManager = (AudioManager) this.mContext.getSystemService(Context.AUDIO_SERVICE);
+        audioManager.setMode(AudioManager.MODE_IN_CALL);
     }
 
     @Override
@@ -56,6 +63,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         return "ReplaceDialer";
     }
 
+    // returns true if app set as default dialer else false
     @ReactMethod
     public void isDefaultDialer(Callback myCallback) {
 
@@ -72,18 +80,19 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         }
     }
 
+    // set default dialer alert
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @ReactMethod
     public void setDefaultDialer(Callback myCallback) {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            RoleManager roleManager = (RoleManager) mContext.getSystemService(Context.ROLE_SERVICE);
-            Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER);
-            mContext.startActivityForResult(intent, RC_DEFAULT_PHONE, new Bundle()); // you need to define CHANGE_DEFAULT_DIALER as a static final int
-            myCallback.invoke(true);
-        } else {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) {
             Intent intent = new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER);
             intent.putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, this.mContext.getPackageName());
             this.mContext.startActivityForResult(intent, RC_DEFAULT_PHONE, new Bundle());
+            myCallback.invoke(true);
+        } else {
+            RoleManager roleManager = (RoleManager) mContext.getSystemService(Context.ROLE_SERVICE);
+            Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER);
+            mContext.startActivityForResult(intent, RC_DEFAULT_PHONE, new Bundle()); // you need to define CHANGE_DEFAULT_DIALER as a static final int
             myCallback.invoke(true);
         }
     }
@@ -95,21 +104,21 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         if (activity == null) {
             // Handle null case
         }
-            Toast.makeText(mContext, "" + phoneNumber, Toast.LENGTH_SHORT).show();
-            Uri uri = Uri.parse("tel:" + phoneNumber.trim());
-            Intent intent = new Intent(Intent.ACTION_CALL, uri);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.putExtra("phone_number",phoneNumber);
-            this.mContext.startActivity(intent);
-            myCallback.invoke(phoneNumber);
+        Toast.makeText(mContext, "" + phoneNumber, Toast.LENGTH_SHORT).show();
+        Uri uri = Uri.parse("tel:" + phoneNumber.trim());
+        Intent intent = new Intent(Intent.ACTION_CALL, uri);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra("phone_number",phoneNumber);
+        this.mContext.startActivity(intent);
+        myCallback.invoke(phoneNumber);
     }
 
     @Override
     public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        Toast.makeText(mContext, "requestcode : "+requestCode, Toast.LENGTH_SHORT).show();
         return false;
     }
 
+    // disconnects call
     @ReactMethod
     public void disconnectCall() {
         try {
@@ -133,47 +142,55 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
                    Log.d("TAG", "disconnectCall: " + success);
                    // success == true if call was terminated.
                }
-           } else {
-               String serviceManagerName = "android.os.ServiceManager";
-               String serviceManagerNativeName = "android.os.ServiceManagerNative";
-               String telephonyName = "com.android.internal.telephony.ITelephony";
-               Class telephonyClass;
-               Class telephonyStubClass;
-               Class serviceManagerClass;
-               Class serviceManagerNativeClass;
-               Method telephonyEndCall;
-               Object telephonyObject;
-               Object serviceManagerObject;
-
-               telephonyClass = Class.forName(telephonyName);
-               telephonyStubClass = telephonyClass.getClasses()[0];
-               serviceManagerClass = Class.forName(serviceManagerName);
-               serviceManagerNativeClass = Class.forName(serviceManagerNativeName);
-
-               Method getService =
-                       serviceManagerClass.getMethod("getService", String.class);
-
-               Method tempInterfaceMethod = serviceManagerNativeClass.getMethod(
-                       "asInterface", IBinder.class);
-
-               Binder tmpBinder = new Binder();
-               tmpBinder.attachInterface(null, "fake");
-
-               serviceManagerObject = tempInterfaceMethod.invoke(null, tmpBinder);
-               IBinder retbinder = (IBinder) getService.invoke(serviceManagerObject, "phone");
-               Method serviceMethod = telephonyStubClass.getMethod("asInterface", IBinder.class);
-
-               telephonyObject = serviceMethod.invoke(null, retbinder);
-               telephonyEndCall = telephonyClass.getMethod("endCall");
-               telephonyEndCall.invoke(telephonyObject);
-
            }
+            mContext.getCurrentActivity().finish();
        } catch (Exception e) {
            e.printStackTrace();
            Toast.makeText(mContext , "FATAL ERROR: could not connect to telephony subsystem", Toast.LENGTH_LONG).show();
        }
    }
 
+   // Turn speaker on/off
+   @ReactMethod
+   public void toggleSpeakerOnOff(){
+        audioManager.setSpeakerphoneOn(audioManager.isSpeakerphoneOn() ? false : true);
+   }
+
+   // Turn mic on/off
+   @ReactMethod
+   public void toggleMicOnOff(){
+        audioManager.setMicrophoneMute(audioManager.isMicrophoneMute() ? false : true);
+   }
+
+    // Retun the name of the connected device
+   @ReactMethod
+   public void getBluetoothName(Callback callback){
+       BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+       Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+       if (pairedDevices.size() > 0) {
+           for (BluetoothDevice device : pairedDevices) {
+               callback.invoke(device.getName());
+           }
+       }
+   }
+
+   @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+   @ReactMethod
+    public void toggleBluetoothOnOff() {
+       BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+       Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+       if (pairedDevices.size() > 0) {
+           for (BluetoothDevice device : pairedDevices) {
+               String name = device.getName();
+
+           }
+       }
+   }
+
+    @ReactMethod
+    public void closeCurrentView() {
+        mContext.getCurrentActivity().finish();
+    }
 
 
 }

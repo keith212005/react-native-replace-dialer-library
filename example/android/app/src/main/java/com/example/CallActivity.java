@@ -5,6 +5,9 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.telecom.Call;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import com.facebook.react.PackageList;
@@ -43,6 +46,11 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
         // the string in AppRegistry.registerComponent() in index.js
         mReactRootView.startReactApplication(mReactInstanceManager, "example", null);
         setContentView(mReactRootView);
+
+        // Phone state listener
+        StateListener phoneStateListener = new StateListener(this);
+        TelephonyManager telephonyManager =(TelephonyManager)getSystemService(TELEPHONY_SERVICE);
+        telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -66,3 +74,28 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
 
     }
 }
+
+class StateListener extends PhoneStateListener {
+
+    Activity activity;
+    StateListener(Activity activity){
+        this.activity = activity;
+    }
+
+    @Override
+    public void onCallStateChanged(int state, String incomingNumber) {
+
+        super.onCallStateChanged(state, incomingNumber);
+        switch (state) {
+            case TelephonyManager.CALL_STATE_RINGING:
+                Log.d("kcall1",""+state+incomingNumber);
+                break;
+            case TelephonyManager.CALL_STATE_OFFHOOK:
+                Log.d("kcall2 (2)",""+state+incomingNumber);
+                break;
+            case TelephonyManager.CALL_STATE_IDLE:
+                Log.d("kcall3 (0)",""+state+incomingNumber);
+                break;
+        }
+    }
+};

@@ -3,9 +3,9 @@ import {TouchableOpacity, Text, StyleSheet, Image} from 'react-native';
 
 export default class CustomButton extends Component {
   render() {
-    const {name, imageUri} = this.props;
+    const {name, imageUri, onPress} = this.props;
     return (
-      <TouchableOpacity style={styles.container}>
+      <TouchableOpacity style={styles.container} onPress={onPress}>
         <Image
           style={[styles.plusImage]}
           source={{
