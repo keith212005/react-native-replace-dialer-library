@@ -1,6 +1,3 @@
-import {AppRegistry} from 'react-native';
-import {name as appName} from './app.json';
-
 import React, {Component} from 'react';
 import {
   View,
@@ -12,14 +9,17 @@ import {
   SafeAreaView,
   TouchableHighlight,
 } from 'react-native';
-import {CustomButton, CallTimer, image} from './src';
-import ReplaceDialer from 'react-native-replace-dialer';
 
+import {CustomButton, CallTimer} from '@components';
+import {image} from '@constants';
+import {responsiveFonts} from '@resources';
+
+import ReplaceDialer from 'react-native-replace-dialer';
 import CallState from 'react-native-call-state';
 import CountDown from 'react-native-countdown-component';
 import {Stopwatch, Timer} from 'react-native-stopwatch-timer';
 
-export default class CallActivity extends Component {
+export default class CallScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -35,6 +35,15 @@ export default class CallActivity extends Component {
     ReplaceDialer.getBluetoothName((name) => {
       this.setState({bluetoothName: name});
     });
+  }
+
+  componentDidMount() {
+    const {phoneNumber} = this.props.route.params;
+    if (phoneNumber != '') {
+      ReplaceDialer.callPhoneNumber(phoneNumber, (message) => {
+        console.log(message);
+      });
+    }
   }
 
   // call state start
@@ -53,7 +62,7 @@ export default class CallActivity extends Component {
       } else {
         this.setState({connected: false, callType: ''});
         if (event === 'Disconnected') {
-          ReplaceDialer.closeCurrentView();
+          this.props.navigation.pop();
         }
       }
     });
@@ -120,18 +129,23 @@ export default class CallActivity extends Component {
   //Call end
   endCall = () => {
     ReplaceDialer.disconnectCall();
-    this.setState({showTimer: false});
   };
 
   render() {
     const {speakerOn, microphone, pause, showTimer, callType} = this.state;
+    const {phoneNumber} = this.props.route.params;
     return (
       <SafeAreaView style={styles.container}>
         {/* Show timer when user pick up call */}
         {showTimer ? (
           <CallTimer />
         ) : (
-          <Text style={styles.calling}>Calling...</Text>
+          <>
+            <Text style={styles.calling}>Calling...</Text>
+            <Text style={styles.phoneNumber}>
+              {phoneNumber ? phoneNumber : ''}
+            </Text>
+          </>
         )}
 
         <Text style={styles.calling}>{this.state.phoneNumber}</Text>
@@ -179,9 +193,7 @@ export default class CallActivity extends Component {
         {this.incomingView()}
         */}
 
-        {callType === 'Incoming' || callType === ''
-          ? this.incomingView()
-          : this.callAnsweredView()}
+        {callType != 'Incoming' ? this.callAnsweredView() : this.incomingView()}
       </SafeAreaView>
     );
   }
@@ -216,20 +228,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-evenly',
   },
+  phoneNumber: {
+    fontSize: responsiveFonts(40),
+  },
 });
-
-const options = {
-  container: {
-    backgroundColor: '#000',
-    padding: 5,
-    borderRadius: 5,
-    width: 220,
-  },
-  text: {
-    fontSize: 30,
-    color: '#FFF',
-    marginLeft: 7,
-  },
-};
-
-AppRegistry.registerComponent(appName, () => CallActivity);

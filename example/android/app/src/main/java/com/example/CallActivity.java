@@ -53,7 +53,7 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
         telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.R)
     public void endCall(Callback myCallback) {
         new OngoingCall().hangup();
     }

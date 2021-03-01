@@ -145,7 +145,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
                     // success == true if call was terminated.
                 }
             }
-            mContext.getCurrentActivity().finish();
+//            mContext.getCurrentActivity().finish();
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(mContext, "FATAL ERROR: could not connect to telephony subsystem", Toast.LENGTH_LONG).show();
@@ -206,10 +206,6 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         tm.acceptRingingCall();
     }
 
-    @ReactMethod
-    public void closeCurrentView() {
-        mContext.getCurrentActivity().finish();
-    }
 
 
 
