@@ -18,10 +18,12 @@ export default class AppContainer extends React.Component {
     />
   );
 
-  render() {
+  render(props) {
+    console.log('StackNavScree>>>', this.props);
     return (
       <NavigationContainer>
         <Stack.Navigator
+          initialRouteName={this.props.screenName}
           screenOptions={{
             headerShown: false,
             gesturesEnabled: false,

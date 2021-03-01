@@ -73,7 +73,10 @@ export default class DialScreen extends Component<{}> {
       console.log('statussesssss>>', statuses);
       switch (statuses['android.permission.CALL_PHONE']) {
         case RESULTS.GRANTED:
-          navigate('CallScreen', {phoneNumber: phoneNumber});
+          // navigate('CallScreen', {phoneNumber: phoneNumber});
+          ReplaceDialer.callPhoneNumber(phoneNumber, (message) => {
+            console.log(message);
+          });
           break;
         case RESULTS.BLOCKED:
           Alert.alert(

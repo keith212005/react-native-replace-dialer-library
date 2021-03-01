@@ -3,10 +3,20 @@ import {LogBox} from 'react-native';
 import {AppContainer} from './navigator';
 
 export default class App extends React.Component {
+  componentDidMount() {
+    console.log('componeedidmoutn>>>', this.props.initialScreenName);
+  }
+
+  shouldComponentUpdate(props) {
+    console.log('shouldComponentUpdate>>>', props.initialScreenName);
+    return true;
+  }
+
   render() {
+    console.log('screenname>>>', this.props.initialScreenName);
     LogBox.ignoreLogs(['Warning: ...']);
     LogBox.ignoreAllLogs();
-    return <AppContainer />;
+    return <AppContainer screenName={this.props.initialScreenName} />;
   }
 }
 

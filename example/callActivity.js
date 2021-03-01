@@ -1,5 +1,6 @@
 import {AppRegistry} from 'react-native';
 import {name as appName} from './app.json';
+import App from './src';
 
 import React, {Component} from 'react';
 import {
@@ -51,8 +52,9 @@ export default class CallActivity extends Component {
       ) {
         this.setState({connected: true, callType: event});
       } else {
-        this.setState({connected: false, callType: ''});
         if (event === 'Disconnected') {
+          this.setState({connected: false, callType: ''});
+          AppRegistry.registerComponent(appName, () => App);
           ReplaceDialer.closeCurrentView();
         }
       }

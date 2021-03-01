@@ -38,12 +38,12 @@ export default class CallScreen extends Component {
   }
 
   componentDidMount() {
-    const {phoneNumber} = this.props.route.params;
-    if (phoneNumber != '') {
-      ReplaceDialer.callPhoneNumber(phoneNumber, (message) => {
-        console.log(message);
-      });
-    }
+    // const {phoneNumber} = this.props.route.params;
+    // if (phoneNumber != '') {
+    //   ReplaceDialer.callPhoneNumber(phoneNumber, (message) => {
+    //     console.log(message);
+    //   });
+    // }
   }
 
   // call state start
@@ -52,6 +52,7 @@ export default class CallScreen extends Component {
     DeviceEventEmitter.addListener('callStateUpdated', (data) => {
       console.log('Call state updated>>', data);
       var event = data.state;
+      this.setState({callType: event});
       if (
         event === 'Connected' ||
         event === 'Incoming' ||
@@ -133,7 +134,7 @@ export default class CallScreen extends Component {
 
   render() {
     const {speakerOn, microphone, pause, showTimer, callType} = this.state;
-    const {phoneNumber} = this.props.route.params;
+    // const {phoneNumber} = this.props.route.params;
     return (
       <SafeAreaView style={styles.container}>
         {/* Show timer when user pick up call */}
@@ -142,9 +143,12 @@ export default class CallScreen extends Component {
         ) : (
           <>
             <Text style={styles.calling}>Calling...</Text>
+            {/*
             <Text style={styles.phoneNumber}>
               {phoneNumber ? phoneNumber : ''}
             </Text>
+            */}
+            <Text style={styles.calling}>{callType ? callType : ''}</Text>
           </>
         )}
 

@@ -2,6 +2,7 @@ package com.example;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.MutableContextWrapper;
 import android.os.Build;
 import android.os.Bundle;
 import android.telecom.Call;
@@ -37,14 +38,16 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
                 .setApplication(getApplication())
                 .setCurrentActivity(this)
                 .setBundleAssetName("index.android.bundle")
-                .setJSMainModulePath("callActivity")
+                .setJSMainModulePath("index")
                 .addPackages(packages)
                 .setUseDeveloperSupport(BuildConfig.DEBUG)
                 .setInitialLifecycleState(LifecycleState.RESUMED)
                 .build();
         // The string here (e.g. "MyReactNativeApp") has to match
         // the string in AppRegistry.registerComponent() in index.js
-        mReactRootView.startReactApplication(mReactInstanceManager, "example", null);
+        Bundle initialProps = new Bundle();
+        initialProps.putString("initialScreenName", "CallScreen");
+        mReactRootView.startReactApplication(mReactInstanceManager, "example", initialProps);
         setContentView(mReactRootView);
 
         // Phone state listener
