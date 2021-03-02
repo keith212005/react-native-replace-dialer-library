@@ -27,7 +27,7 @@ import {responsiveWidth, responsiveHeight, responsiveFonts} from '@resources';
 
 export default class DialScreen extends Component<{}> {
   state = {
-    phoneNumber: '',
+    phoneNumber: '9724767351',
     speakerStatus: false,
   };
   componentDidMount() {
@@ -52,7 +52,10 @@ export default class DialScreen extends Component<{}> {
 
   requestPermission() {
     return new Promise(function (resolve, reject) {
-      requestMultiple([PERMISSIONS.ANDROID.CALL_PHONE]).then((statuses) => {
+      requestMultiple([
+        PERMISSIONS.ANDROID.CALL_PHONE,
+        PERMISSIONS.ANDROID.READ_CALL_LOG,
+      ]).then((statuses) => {
         resolve(statuses);
       });
     });
@@ -60,7 +63,10 @@ export default class DialScreen extends Component<{}> {
 
   checkPermissions() {
     return new Promise(function (resolve, reject) {
-      checkMultiple([PERMISSIONS.ANDROID.CALL_PHONE]).then((statuses) => {
+      checkMultiple([
+        PERMISSIONS.ANDROID.CALL_PHONE,
+        PERMISSIONS.ANDROID.READ_CALL_LOG,
+      ]).then((statuses) => {
         resolve(statuses);
       });
     });
@@ -71,9 +77,9 @@ export default class DialScreen extends Component<{}> {
     const {navigate} = this.props.navigation;
     this.checkPermissions().then((statuses) => {
       console.log('statussesssss>>', statuses);
+
       switch (statuses['android.permission.CALL_PHONE']) {
         case RESULTS.GRANTED:
-          // navigate('CallScreen', {phoneNumber: phoneNumber});
           ReplaceDialer.callPhoneNumber(phoneNumber, (message) => {
             console.log(message);
           });
@@ -118,7 +124,11 @@ export default class DialScreen extends Component<{}> {
     return (
       <View style={styles.container}>
         <View>
-          <Text style={styles.input}>{this.state.phoneNumber}</Text>
+          <TextInput
+            style={styles.input}
+            value={this.state.phoneNumber}
+            showSoftInputOnFocus={false}
+          />
         </View>
 
         <KeypadView
@@ -157,7 +167,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5FCFF',
   },
   input: {
     marginTop: responsiveHeight(25),

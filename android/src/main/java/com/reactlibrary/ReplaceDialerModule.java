@@ -58,7 +58,9 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         super(context);
         this.mContext = context;
         audioManager = (AudioManager) this.mContext.getSystemService(Context.AUDIO_SERVICE);
+        audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
+
     }
 
     @Override
@@ -176,7 +178,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void toggleBluetoothOnOff() {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -205,7 +207,6 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         }
         tm.acceptRingingCall();
     }
-
 
     @ReactMethod
     public void closeCurrentView() {

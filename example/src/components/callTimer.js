@@ -7,8 +7,7 @@ export default class CallTimer extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      timerStart: false,
-      stopwatchStart: true,
+      stopwatchStart: this.props.startTimer,
       totalDuration: 90000,
       timerReset: false,
       stopwatchReset: false,
@@ -39,10 +38,15 @@ export default class CallTimer extends Component {
   }
 
   getFormattedTime(time) {
+    console.log(time);
     this.currentTime = time;
   }
 
-  render() {
+  componentWillUnmount() {
+    this.resetTimer();
+  }
+
+  render(props) {
     return (
       <Stopwatch
         laps
@@ -54,7 +58,7 @@ export default class CallTimer extends Component {
     );
   }
 }
-const handleTimerComplete = () => alert('custom completion function');
+// const handleTimerComplete = () => alert('custom completion function');
 
 const options = {
   container: {},

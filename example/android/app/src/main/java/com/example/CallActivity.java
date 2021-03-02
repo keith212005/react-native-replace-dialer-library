@@ -1,16 +1,26 @@
 package com.example;
+
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.MutableContextWrapper;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.telecom.Call;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.widget.Toast;
+import android.view.WindowManager;
+
 import androidx.annotation.RequiresApi;
+
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactPackage;
@@ -18,15 +28,22 @@ import com.facebook.react.ReactRootView;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.common.LifecycleState;
 import com.facebook.react.modules.core.DefaultHardwareBackBtnHandler;
+import com.facebook.react.modules.core.PermissionAwareActivity;
+import com.facebook.react.modules.core.PermissionListener;
 import com.facebook.soloader.SoLoader;
 
 import java.util.List;
 
-public class CallActivity extends Activity implements DefaultHardwareBackBtnHandler {
+public class CallActivity extends Activity implements DefaultHardwareBackBtnHandler, PermissionAwareActivity {
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Phone state listener
+        startPhoneStateListener();
+
         SoLoader.init(this, false);
         ReactRootView mReactRootView = new ReactRootView(this);
         List<ReactPackage> packages = new PackageList(getApplication()).getPackages();
@@ -50,10 +67,22 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
         mReactRootView.startReactApplication(mReactInstanceManager, "example", initialProps);
         setContentView(mReactRootView);
 
-        // Phone state listener
-        StateListener phoneStateListener = new StateListener(this);
-        TelephonyManager telephonyManager =(TelephonyManager)getSystemService(TELEPHONY_SERVICE);
-        telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
+        // this will show incoming screen while device is locked
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+
+
+    }
+
+    public void startPhoneStateListener() {
+        TelephonyManager telephony = (TelephonyManager) this.getApplicationContext().getSystemService(Context.TELEPHONY_SERVICE);
+        telephony.listen(new PhoneStateListener() {
+            @Override
+            public void onCallStateChanged(int state, String incomingNumber) {
+                super.onCallStateChanged(state, incomingNumber);
+                System.out.println("incomingNumber : " + state + incomingNumber);
+                Log.d("kcal", "numbersss : " + state + incomingNumber);
+            }
+        }, PhoneStateListener.LISTEN_CALL_STATE);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
@@ -76,59 +105,16 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
     public void onPointerCaptureChanged(boolean hasCapture) {
 
     }
-}
 
-class StateListener extends PhoneStateListener {
-
-    Activity activity;
-    StateListener(Activity activity){
-        this.activity = activity;
-    }
-
-
-    //Incoming call-  goes from IDLE to RINGING when it rings, to OFFHOOK when it's answered, to IDLE when its hung up
-    //Outgoing call-  goes from IDLE to OFFHOOK when it dials out, to IDLE when hung up
     @Override
-    public void onCallStateChanged(int state, String incomingNumber) {
+    public void requestPermissions(String[] permissions, int requestCode, PermissionListener listener) {
 
-        int lastState = TelephonyManager.CALL_STATE_IDLE;
-        boolean isIncoming = false;
-
-        super.onCallStateChanged(state, incomingNumber);
-        if(lastState == state){
-            //No change, debounce extras
-            return;
-        }
-        switch (state) {
-            case TelephonyManager.CALL_STATE_RINGING:
-                // on incoming call started
-                Log.d("kcall1",""+state+incomingNumber);
-                isIncoming = true;
-                break;
-            case TelephonyManager.CALL_STATE_OFFHOOK:
-                // on outgoing call started
-                Log.d("kcall2 (2)",""+state+incomingNumber);
-                if(lastState != TelephonyManager.CALL_STATE_RINGING){
-                    isIncoming = false;
-                }
-                break;
-            case TelephonyManager.CALL_STATE_IDLE:
-                // went to idle this is end of call. What type depends on previous states
-                Log.d("kcall3 (0)",""+state+incomingNumber);
-                if(lastState == TelephonyManager.CALL_STATE_RINGING){
-                    //Ring but no pickup-  a miss
-                    Log.d("kcall missed call","");
-                    activity.finish();
-                }
-                else if(isIncoming==true){
-                    Log.d("kcall","incoming call ended.");
-                }
-                else{
-                    Log.d("kcall","outgoing call ended.");
-                    activity.finish();
-                }
-                break;
-        }
-        lastState = state;
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+
+    }
+
+
 }

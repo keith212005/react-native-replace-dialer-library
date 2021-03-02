@@ -5736,10 +5736,10 @@ react-is@^17.0.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.1.tgz#5b3531bd76a645a4c9fb6e693ed36419e3301339"
   integrity sha512-NAnt2iGDXohE5LI7uBnLnqvLQMtzhkiAOLXTmv+qnF9Ky7xAPcX8Up/xWIhxvLVGJvuLiNc4xQLtuqDRzb4fSA==
 
-react-native-call-state@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/react-native-call-state/-/react-native-call-state-1.0.4.tgz#7832c580ac2be825039a247c1c7fadcecfac5a14"
-  integrity sha512-n+wX9RLPJBR96h1omkqYCydosM41IR0Nluw7f7HPsYo+bW4ZzPJGMBb0V25y+XIWt7z4rbHz1654TwIXJj8UKw==
+react-native-call-detection@^1.9.0:
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/react-native-call-detection/-/react-native-call-detection-1.9.0.tgz#2477690158768e01842f0bd5c2544e4a3247e616"
+  integrity sha512-UaF/I1cp2UnIbdCh3UmrFIA4an8El1gIBM6uIbM+OYCrfe5btIj7DYtjqtNoeKOtF7fap32m37v6lafQ9SZHpg==
 
 react-native-countdown-component@^2.7.1:
   version "2.7.1"

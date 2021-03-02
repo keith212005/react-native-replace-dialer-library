@@ -1,5 +1,5 @@
 import React from 'react';
-import {StatusBar} from 'react-native';
+import {StatusBar, View} from 'react-native';
 
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
@@ -21,18 +21,25 @@ export default class AppContainer extends React.Component {
   render(props) {
     console.log('StackNavScree>>>', this.props);
     return (
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName={this.props.screenName}
-          screenOptions={{
-            headerShown: false,
-            gesturesEnabled: false,
-            animationEnabled: false,
-          }}>
-          {this._addScreen('DialScreen')}
-          {this._addScreen('CallScreen')}
-        </Stack.Navigator>
-      </NavigationContainer>
+      <>
+        <StatusBar
+          backgroundColor="transparent"
+          barStyle={'dark-content'}
+          translucent={true}
+        />
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName={this.props.screenName}
+            screenOptions={{
+              headerShown: false,
+              gesturesEnabled: false,
+              animationEnabled: false,
+            }}>
+            {this._addScreen('DialScreen')}
+            {this._addScreen('CallScreen')}
+          </Stack.Navigator>
+        </NavigationContainer>
+      </>
     );
   }
 }

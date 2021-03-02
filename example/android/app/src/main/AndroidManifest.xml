@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="com.example">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
@@ -8,7 +9,20 @@
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MODIFY_PHONE_STATE"
+        tools:ignore="ProtectedPermissions" />
 
+
+
+
+
+
+    <!--    For android 9 and higher to get incoming phone number-->
+    <uses-permission android:name="android.permission.READ_CALL_LOG"/>
+
+    <!--    For android 9 and higher to get outgoing phone number-->
+    <uses-permission android:name="android.permission.NEW_OUTGOING_CALL" />
 
 
     <application
@@ -64,9 +78,22 @@
                   <intent-filter>
                       <action android:name="android.telecom.InCallService" />
                   </intent-filter>
+
+                  <intent-filter>
+                      <action android:name="android.intent.action.NEW_OUTGOING_CALL" />
+                  </intent-filter>
+
+                  <intent-filter>
+                      <action android:name="android.intent.action.PHONE_STATE" />
+                  </intent-filter>
+
+
               </service>
+
       <!-- ReplaceDialer Service -->
-       <activity android:name=".CallActivity" />
+       <activity android:name=".CallActivity"/>
+
+
     </application>
 
 </manifest>
