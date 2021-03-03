@@ -32,8 +32,10 @@ export default class CallScreen extends Component {
       phoneNumber: '',
       bluetoothName: 'Bluetooth',
       speakerOn: false,
+      holdCall: false,
       microphone: false,
-      pause: false,
+      callRecord: false,
+      showKeypad: false,
     };
     // this.startListenerTapped();
     this.startListenerTapped();
@@ -44,6 +46,12 @@ export default class CallScreen extends Component {
 
   stopListenerTapped() {
     this.callDetector && this.callDetector.dispose();
+  }
+
+  componentDidMount() {
+    // ReplaceDialer.onScreenCall((num) => {
+    //   console.log('KKKKKkkkkkkkkkkkkkk >>>>>>>>>>>>>>>>>>', num);
+    // });
   }
 
   componentWillUnmount() {
@@ -150,18 +158,42 @@ export default class CallScreen extends Component {
     ReplaceDialer.toggleMicOnOff();
   };
 
+  handleCallRecord = () => {
+    const {callRecord} = this.state;
+    this.setState({callRecord: !callRecord});
+  };
+
   handleBluetooth = () => {
     ReplaceDialer.toggleBluetoothOnOff();
   };
 
-  // Answer Call
+  handleShowKeypad = () => {
+    const {showKeypad} = this.state;
+    this.setState({showKeypad: !showKeypad});
+  };
+
+  handleAddCall = () => {
+    // const {holdCall} = this.state;
+    // this.setState({holdCall: !holdCall}, () => {
+    //   ReplaceDialer.makeConferenceCall();
+    // });
+  };
+
+  handleHoldCall = () => {
+    const {holdCall} = this.state;
+    this.setState({holdCall: !holdCall}, () => {
+      ReplaceDialer.holdCall();
+    });
+  };
+
+  // Accept Call
   handleAcceptCall = () => {
     this.setState({showTimer: true}, () => {
       ReplaceDialer.acceptCall();
     });
   };
 
-  //Call end
+  // Decline call
   endCall = () => {
     ReplaceDialer.disconnectCall();
   };
@@ -170,77 +202,102 @@ export default class CallScreen extends Component {
     const {
       speakerOn,
       microphone,
-      pause,
       showTimer,
       startTimer,
       callType,
+      callRecord,
       phoneNumber,
+      showKeypad,
+      holdCall,
     } = this.state;
     console.log('calT>>', callType);
-    // const {phoneNumber} = this.props.route.params;
+
     return (
       <>
         <StatusBar barStyle={'dark-content'} />
         <SafeAreaView style={styles.container}>
-          <Text style={styles.phoneNumber}>
-            {phoneNumber ? phoneNumber : ''}
-          </Text>
+          <View style={styles.subContainer1}>
+            <Text style={styles.phoneNumber}>
+              {phoneNumber ? phoneNumber : ''}
+            </Text>
 
-          {/* Show timer when user pick up call */}
-          {showTimer ? (
-            <CallTimer startTimer={startTimer} />
-          ) : (
-            <>
-              {callType === 'Dialing' || callType === 'Offhook' ? (
-                <Text style={styles.calling}>Calling...</Text>
-              ) : null}
+            {/* Show timer when user pick up call */}
+            {showTimer ? (
+              <CallTimer startTimer={startTimer} />
+            ) : (
+              <>
+                {callType === 'Dialing' || callType === 'Offhook' ? (
+                  <Text style={styles.calling}>Calling...</Text>
+                ) : null}
 
-              <Text style={styles.calling}>{callType ? callType : ''}</Text>
-            </>
-          )}
-          <View style={styles.row}>
-            <CustomButton
-              name="Add"
-              imageUri={image.plus_black}
-              imageStyle={{height: '23%'}}
-            />
-            <CustomButton
-              name="Pause"
-              imageUri={pause ? image.pause_black : image.pause_gray}
-              imageStyle={{height: '23%'}}
-            />
-            <CustomButton
-              name={this.state.bluetoothName}
-              imageUri={image.bluetooth_gray}
-              imageStyle={{height: '23%'}}
-              onPress={this.handleBluetooth}
-            />
-          </View>
-          <View style={styles.row}>
-            <CustomButton
-              name="Speaker"
-              imageUri={speakerOn ? image.speaker_black : image.speaker_gray}
-              imageStyle={{height: '23%'}}
-              onPress={this.handleSpeaker}
-            />
-
-            <CustomButton
-              name="Mute"
-              imageUri={microphone ? image.mic_gray : image.mic_black}
-              imageStyle={{height: '23%'}}
-              onPress={this.handleMic}
-            />
-
-            <CustomButton
-              name="Keypad"
-              imageUri={image.keypad_black}
-              imageStyle={{height: '23%'}}
-            />
+                <Text style={styles.calling}>{callType ? callType : ''}</Text>
+              </>
+            )}
           </View>
 
-          {callType === 'Incoming' || callType === 'Missed'
-            ? this.incomingView()
-            : this.callAnsweredView()}
+          <View style={styles.subContainer2}>
+            <View style={styles.row}>
+              <CustomButton
+                name="Add"
+                imageUri={image.plus_black}
+                imageStyle={{height: responsiveHeight(5)}}
+                onPress={this.handleAddCall}
+                buttonStyle={{padding: 30}}
+              />
+              <CustomButton
+                name="Hold"
+                imageUri={holdCall ? image.pause_gray : image.pause_black}
+                imageStyle={{height: responsiveHeight(5)}}
+                onPress={this.handleAddCall}
+                buttonStyle={{padding: 30}}
+              />
+              <CustomButton
+                name="Record"
+                imageUri={callRecord ? image.record_black : image.record_gray}
+                imageStyle={{height: responsiveHeight(5)}}
+                onPress={this.handleCallRecord}
+                buttonStyle={{padding: 30}}
+              />
+              <CustomButton
+                name={this.state.bluetoothName}
+                imageUri={image.bluetooth_gray}
+                imageStyle={{height: responsiveHeight(5)}}
+                onPress={this.handleBluetooth}
+                buttonStyle={{padding: 30}}
+              />
+            </View>
+            <View style={styles.row}>
+              <CustomButton
+                name="Speaker"
+                imageUri={speakerOn ? image.speaker_black : image.speaker_gray}
+                imageStyle={{height: responsiveHeight(5)}}
+                onPress={this.handleSpeaker}
+                buttonStyle={{padding: 30}}
+              />
+
+              <CustomButton
+                name="Mute"
+                imageUri={microphone ? image.mic_gray : image.mic_black}
+                imageStyle={{height: responsiveHeight(5)}}
+                onPress={this.handleMic}
+                buttonStyle={{padding: 30}}
+              />
+
+              <CustomButton
+                name="Keypad"
+                imageUri={showKeypad ? image.keypad_black : image.keypad_gray}
+                imageStyle={{height: responsiveHeight(5)}}
+                onPress={this.handleShowKeypad}
+                buttonStyle={{padding: 30}}
+              />
+            </View>
+          </View>
+
+          <View style={styles.subContainer3}>
+            {callType === 'Incoming' || callType === 'Missed'
+              ? this.incomingView()
+              : this.callAnsweredView()}
+          </View>
         </SafeAreaView>
       </>
     );
@@ -263,6 +320,7 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
   },
   calling: {
+    textAlign: 'center',
     paddingTop: 10,
     fontSize: 22,
     color: 'gray',
@@ -280,5 +338,18 @@ const styles = StyleSheet.create({
   },
   phoneNumber: {
     fontSize: responsiveFonts(26),
+  },
+  subContainer1: {
+    flex: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  subContainer2: {
+    flex: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  subContainer3: {
+    flex: 2,
   },
 });

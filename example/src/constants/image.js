@@ -12,6 +12,8 @@ export const image = {
   pause_black: 'pause_black',
   pause_gray: 'pause_gray',
   clear_symbol: 'clear_symbol_black',
+  record_black: 'record_black',
+  record_gray: 'record_gray',
   endCallButton:
     'https://docs.counterpath.com/docs/CollabUG/Resources/Images/UG/AndroidRetail/icons/end_And.png',
   recieveCallButton:

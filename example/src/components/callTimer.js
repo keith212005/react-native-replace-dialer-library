@@ -3,6 +3,8 @@ import {View, Text, StyleSheet, TouchableHighlight} from 'react-native';
 
 import {Stopwatch, Timer} from 'react-native-stopwatch-timer';
 
+import {colors} from '@resources';
+
 export default class CallTimer extends Component {
   constructor(props) {
     super(props);
@@ -58,13 +60,12 @@ export default class CallTimer extends Component {
     );
   }
 }
-// const handleTimerComplete = () => alert('custom completion function');
 
 const options = {
   container: {},
   text: {
-    fontSize: 30,
-    color: 'black',
+    fontSize: 20,
+    color: colors.dark_gray,
     marginLeft: 7,
   },
 };

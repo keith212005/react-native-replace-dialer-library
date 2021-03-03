@@ -27,7 +27,11 @@ import com.facebook.react.modules.core.PermissionListener;
 
 
 import android.os.IBinder;
+import android.provider.CallLog;
+import android.telecom.Call;
+import android.telecom.CallScreeningService;
 import android.telecom.TelecomManager;
+import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -208,12 +212,39 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         tm.acceptRingingCall();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void closeCurrentView() {
-        mContext.getCurrentActivity().finish();
+        mContext.getCurrentActivity().finishAndRemoveTask();
+    }
+
+    @ReactMethod
+    public void makeConferenceCall(final Callback callback){
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    @ReactMethod
+    public void holdCall(Call.Details details){
+
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    @ReactMethod
+    public void onScreenCall(Callback callback) {
+//        final Call call = getCurrentActivity().getci
+//            if(CallLog.Calls.getLastOutgoingCall .getCallDirection() == Call.Details.DIRECTION_INCOMING) {
+//                CallScreeningService.CallResponse.Builder response = new CallScreeningService.CallResponse.Builder();
+//                response.setDisallowCall(false);
+//                response.setRejectCall(false);
+//                response.setSilenceCall(false);
+//                response.setSkipCallLog(false);
+//                response.setSkipNotification(false);
+//                details.getHandle(); //This is the calling number
+//                callback.invoke(response.build());
+//        }
+    }
 
 
 

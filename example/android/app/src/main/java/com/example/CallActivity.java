@@ -36,7 +36,7 @@ import java.util.List;
 
 public class CallActivity extends Activity implements DefaultHardwareBackBtnHandler, PermissionAwareActivity {
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,7 +55,7 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
                 .setApplication(getApplication())
                 .setCurrentActivity(this)
                 .setBundleAssetName("index.android.bundle")
-                .setJSMainModulePath("index")
+                .setJSMainModulePath("index.android")
                 .addPackages(packages)
                 .setUseDeveloperSupport(BuildConfig.DEBUG)
                 .setInitialLifecycleState(LifecycleState.RESUMED)

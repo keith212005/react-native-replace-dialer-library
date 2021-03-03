@@ -13,7 +13,7 @@ public class OngoingCall {
     public static BehaviorSubject<Integer> state = BehaviorSubject.create();
     private static Call call;
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.R)
     private Object callback = new Call.Callback() {
         @Override
         public void onStateChanged(Call call, int newState) {
@@ -22,7 +22,7 @@ public class OngoingCall {
         }
     };
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.R)
     public final void setCall(@Nullable Call value) {
         if (call != null) {
             call.unregisterCallback((Call.Callback)callback);
@@ -36,13 +36,13 @@ public class OngoingCall {
         call = value;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.R)
     public void answer() {
         assert call != null;
         call.answer(VideoProfile.STATE_AUDIO_ONLY);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.R)
     public void hangup() {
         assert call != null;
         call.disconnect();

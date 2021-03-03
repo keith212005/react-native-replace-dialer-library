@@ -1,11 +1,12 @@
 import React, {Component} from 'react';
 import {TouchableOpacity, Text, StyleSheet, Image, View} from 'react-native';
+import {responsiveFonts, responsiveWidth, responsiveHeight} from '@resources';
 
 export default class CustomButton extends Component {
   render() {
-    const {name, imageUri, onPress, imageStyle} = this.props;
+    const {name, imageUri, onPress, imageStyle, buttonStyle} = this.props;
     return (
-      <TouchableOpacity style={styles.button} onPress={onPress}>
+      <TouchableOpacity style={[styles.button, buttonStyle]} onPress={onPress}>
         <Image
           style={[styles.image, imageStyle]}
           source={{
@@ -22,13 +23,12 @@ const styles = StyleSheet.create({
   button: {
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 15,
   },
   image: {
     aspectRatio: 1,
   },
   name: {
-    fontSize: 12,
+    fontSize: responsiveFonts(12),
     color: 'gray',
   },
 });
