@@ -12,15 +12,17 @@ import androidx.annotation.RequiresApi;
 public class CallService extends InCallService {
 
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     public void onCallAdded(Call call) {
         super.onCallAdded(call);
         Uri uri = call.getDetails().getHandle();
-        Log.d("details",""+uri);
+        Log.d("detailssssss","callservice : " + uri);
         new OngoingCall().setCall(call);
         CallActivity.start(this, call);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     public void onCallRemoved(Call call) {
         super.onCallRemoved(call);

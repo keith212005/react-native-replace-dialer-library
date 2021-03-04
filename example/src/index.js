@@ -7,16 +7,22 @@ export default class App extends React.Component {
     console.log('componeedidmoutn>>>', this.props.initialScreenName);
   }
 
-  shouldComponentUpdate(props) {
-    console.log('shouldComponentUpdate>>>', props.initialScreenName);
-    return true;
-  }
+  // shouldComponentUpdate(props) {
+  //   console.log('shouldComponentUpdate>>>', props.initialScreenName);
+  //   return true;
+  // }
 
   render() {
-    console.log('screenname>>>', this.props.initialScreenName);
+    const {initialScreenName, outgoingNumber} = this.props;
+    console.log('screenname>>>', initialScreenName);
     LogBox.ignoreLogs(['Warning: ...']);
     LogBox.ignoreAllLogs();
-    return <AppContainer screenName={this.props.initialScreenName} />;
+    return (
+      <AppContainer
+        screenName={initialScreenName}
+        outGoingNumber={outgoingNumber}
+      />
+    );
   }
 }
 

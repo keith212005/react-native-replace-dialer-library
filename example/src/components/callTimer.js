@@ -40,7 +40,6 @@ export default class CallTimer extends Component {
   }
 
   getFormattedTime(time) {
-    console.log(time);
     this.currentTime = time;
   }
 

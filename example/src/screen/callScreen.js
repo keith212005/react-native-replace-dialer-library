@@ -23,13 +23,14 @@ import {Stopwatch, Timer} from 'react-native-stopwatch-timer';
 export default class CallScreen extends Component {
   constructor(props) {
     super(props);
-
+    console.log('phone$$$', props.route.params.outGoingNumber);
+    const {outGoingNumber} = this.props.route.params;
     this.state = {
       connected: false,
       callType: '',
       startTimer: true,
       showTimer: false,
-      phoneNumber: '',
+      phoneNumber: outGoingNumber ? outGoingNumber : '',
       bluetoothName: 'Bluetooth',
       speakerOn: false,
       holdCall: false,
@@ -37,7 +38,6 @@ export default class CallScreen extends Component {
       callRecord: false,
       showKeypad: false,
     };
-    // this.startListenerTapped();
     this.startListenerTapped();
     ReplaceDialer.getBluetoothName((name) => {
       this.setState({bluetoothName: name});
@@ -48,11 +48,7 @@ export default class CallScreen extends Component {
     this.callDetector && this.callDetector.dispose();
   }
 
-  componentDidMount() {
-    // ReplaceDialer.onScreenCall((num) => {
-    //   console.log('KKKKKkkkkkkkkkkkkkk >>>>>>>>>>>>>>>>>>', num);
-    // });
-  }
+  componentDidMount() {}
 
   componentWillUnmount() {
     this.stopListenerTapped();
@@ -61,7 +57,8 @@ export default class CallScreen extends Component {
   startListenerTapped() {
     this.callDetector = new CallDetectorManager(
       (event, phoneNumber) => {
-        this.setState({callType: event, phoneNumber: phoneNumber});
+        this.setState({callType: event});
+
         // For iOS event will be either "Connected",
         // "Disconnected","Dialing" and "Incoming"
 
@@ -75,7 +72,7 @@ export default class CallScreen extends Component {
           this.setState({connected: false, startTimer: false}, () => {
             setTimeout(() => {
               ReplaceDialer.closeCurrentView();
-            }, 2000);
+            }, 1000);
           });
         } else if (event === 'Connected') {
           // Do something call got connected
@@ -88,7 +85,6 @@ export default class CallScreen extends Component {
           // Do something call got dialing
           // This clause will only be executed for iOS
           this.setState({connected: false});
-          console.log('Dialing >> ', event, phoneNumber);
         } else if (event === 'Offhook') {
           //Device call state: Off-hook.
           // At least one call exists that is dialing,
@@ -102,7 +98,7 @@ export default class CallScreen extends Component {
           this.setState({connected: false});
           setTimeout(() => {
             ReplaceDialer.closeCurrentView();
-          }, 2000);
+          }, 1000);
         }
       },
       true, // if you want to read the phone number of the incoming call [ANDROID], otherwise false
@@ -210,29 +206,24 @@ export default class CallScreen extends Component {
       showKeypad,
       holdCall,
     } = this.state;
-    console.log('calT>>', callType);
 
     return (
       <>
         <StatusBar barStyle={'dark-content'} />
         <SafeAreaView style={styles.container}>
           <View style={styles.subContainer1}>
+            {callType === 'Dialing' || callType === 'Offhook' ? (
+              <Text style={styles.calling}>Calling...</Text>
+            ) : (
+              <Text style={styles.calling}>{callType}</Text>
+            )}
+
             <Text style={styles.phoneNumber}>
               {phoneNumber ? phoneNumber : ''}
             </Text>
 
             {/* Show timer when user pick up call */}
-            {showTimer ? (
-              <CallTimer startTimer={startTimer} />
-            ) : (
-              <>
-                {callType === 'Dialing' || callType === 'Offhook' ? (
-                  <Text style={styles.calling}>Calling...</Text>
-                ) : null}
-
-                <Text style={styles.calling}>{callType ? callType : ''}</Text>
-              </>
-            )}
+            {showTimer ? <CallTimer startTimer={startTimer} /> : null}
           </View>
 
           <View style={styles.subContainer2}>

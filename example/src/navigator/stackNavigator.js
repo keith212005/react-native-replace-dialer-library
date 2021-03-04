@@ -10,16 +10,23 @@ import * as Screen from '@screen';
 const Stack = createStackNavigator();
 
 export default class AppContainer extends React.Component {
-  _addScreen = (routeName, isNavigator = false, extraProps = {}) => (
+  _addScreen = (
+    routeName,
+    isNavigator = false,
+    extraProps = {},
+    initialParams,
+  ) => (
     <Stack.Screen
       name={routeName}
       component={!isNavigator ? Screen[routeName] : undefined}
+      initialParams={initialParams}
       {...extraProps}
     />
   );
 
   render(props) {
     console.log('StackNavScree>>>', this.props);
+
     return (
       <>
         <StatusBar
@@ -29,14 +36,18 @@ export default class AppContainer extends React.Component {
         />
         <NavigationContainer>
           <Stack.Navigator
-            initialRouteName={this.props.screenName}
+            initialRouteName={
+              this.props.screenName ? this.props.screenName : 'DialScreen'
+            }
             screenOptions={{
               headerShown: false,
               gesturesEnabled: false,
               animationEnabled: false,
             }}>
             {this._addScreen('DialScreen')}
-            {this._addScreen('CallScreen')}
+            {this._addScreen('CallScreen', false, null, {
+              outGoingNumber: this.props.outGoingNumber,
+            })}
           </Stack.Navigator>
         </NavigationContainer>
       </>
