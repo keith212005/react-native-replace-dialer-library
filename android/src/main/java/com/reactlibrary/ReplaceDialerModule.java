@@ -1,55 +1,47 @@
 package com.reactlibrary;
 
-import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.bridge.ReactContextBaseJavaModule;
-import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.bridge.Callback;
-
 import android.Manifest;
 import android.app.Activity;
+import android.app.Application;
 import android.app.role.RoleManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
-import android.bluetooth.BluetoothProfile;
-import android.content.pm.PackageManager;
-import android.media.AudioManager;
-import android.net.Uri;
-import android.os.Binder;
-import android.os.Build;
-import android.os.Bundle;
-
 import android.content.Context;
 import android.content.Intent;
-
-import com.facebook.react.modules.core.PermissionAwareActivity;
-import com.facebook.react.modules.core.PermissionListener;
-
-
-import android.os.IBinder;
-import android.provider.CallLog;
+import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.media.AudioManager;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.PowerManager;
 import android.telecom.Call;
-import android.telecom.CallScreeningService;
 import android.telecom.TelecomManager;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Method;
-import java.util.List;
+import com.facebook.react.bridge.ActivityEventListener;
+import com.facebook.react.bridge.BaseActivityEventListener;
+import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.LifecycleEventListener;
+import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactContextBaseJavaModule;
+import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.modules.core.PermissionAwareActivity;
+import com.facebook.react.modules.core.PermissionListener;
+
 import java.util.Set;
 
-import static android.Manifest.permission.CALL_PHONE;
+import static android.content.Context.POWER_SERVICE;
 
-public class ReplaceDialerModule extends ReactContextBaseJavaModule implements PermissionListener {
+public class ReplaceDialerModule extends ReactContextBaseJavaModule implements PermissionListener, LifecycleEventListener {
 
     private final ReactApplicationContext mContext;
 
@@ -58,13 +50,15 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     TelecomManager telecomManager;
     private static final int RC_DEFAULT_PHONE = 3289;
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     public ReplaceDialerModule(ReactApplicationContext context) {
         super(context);
         this.mContext = context;
         audioManager = (AudioManager) this.mContext.getSystemService(Context.AUDIO_SERVICE);
         audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
-
+        telecomManager = (TelecomManager) this.mContext.getSystemService(Context.TELECOM_SERVICE);
+        mContext.addLifecycleEventListener(this);
     }
 
     @Override
@@ -75,12 +69,10 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     // returns true if app set as default dialer else false
     @ReactMethod
     public void isDefaultDialer(Callback myCallback) {
-
         if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.R) {
             myCallback.invoke(false);
             return;
         }
-
         TelecomManager telecomManager = (TelecomManager) this.mContext.getSystemService(Context.TELECOM_SERVICE);
         if (telecomManager.getDefaultDialerPackage().equals(this.mContext.getPackageName())) {
             myCallback.invoke(true);
@@ -90,7 +82,6 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     }
 
     // set default dialer alert
-    @RequiresApi(api = Build.VERSION_CODES.Q)
     @ReactMethod
     public void setDefaultDialer(Callback myCallback) {
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) {
@@ -127,31 +118,24 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     }
 
     // disconnects call
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void disconnectCall() {
         try {
             TelecomManager tm = null;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                tm = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
-                Log.d("TAG", "disconnectCall: 1");
-                if (tm != null) {
-                    boolean success = false;
-                    Log.d("TAG", "disconnectCall: 2");
-                    ActivityCompat.requestPermissions(mContext.getCurrentActivity(),
-                            new String[]{Manifest.permission.ANSWER_PHONE_CALLS},
-                            110);
-                    Thread.sleep(100);
-                    Log.d("TAG", "disconnectCall: 3");
-                    if (mContext.checkSelfPermission(Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED) {
-                        Log.d("TAG", "disconnectCall: 4");
-                        success = tm.endCall();
-                    }
-                    Log.d("TAG", "disconnectCall: 5");
-                    Log.d("TAG", "disconnectCall: " + success);
-                    // success == true if call was terminated.
+            tm = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
+            if (tm != null) {
+                boolean success = false;
+                ActivityCompat.requestPermissions(mContext.getCurrentActivity(),
+                        new String[]{Manifest.permission.ANSWER_PHONE_CALLS},
+                        110);
+                Thread.sleep(100);
+                if (mContext.checkSelfPermission(Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED) {
+                    success = tm.endCall();
                 }
-            }
+                Log.d("TAG", "disconnectCall: " + success);
 
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(mContext, "FATAL ERROR: could not connect to telephony subsystem", Toast.LENGTH_LONG).show();
@@ -190,7 +174,6 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         if (pairedDevices.size() > 0) {
             for (BluetoothDevice device : pairedDevices) {
                 String name = device.getName();
-
             }
         }
     }
@@ -218,35 +201,46 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         mContext.getCurrentActivity().finishAndRemoveTask();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
-    public void makeConferenceCall(final Callback callback){
+    public void makeConferenceCall() {
+        TelecomManager tm = (TelecomManager) mContext
+                .getSystemService(Context.TELECOM_SERVICE);
 
+        if (tm == null) {
+            throw new NullPointerException("tm == null");
+        }
+
+        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ANSWER_PHONE_CALLS) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        Uri uri = Uri.fromParts("tel", "12345", null);
+        Bundle extras = new Bundle();
+        extras.putBoolean(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, true);
+        tm.placeCall(uri, extras);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
-    public void holdCall(Call.Details details){
+    public void holdCall(Call.Details details) {
 
     }
 
-
-    @RequiresApi(api = Build.VERSION_CODES.R)
-    @ReactMethod
-    public void onScreenCall(Callback callback) {
-//        final Call call = getCurrentActivity().getci
-//            if(CallLog.Calls.getLastOutgoingCall .getCallDirection() == Call.Details.DIRECTION_INCOMING) {
-//                CallScreeningService.CallResponse.Builder response = new CallScreeningService.CallResponse.Builder();
-//                response.setDisallowCall(false);
-//                response.setRejectCall(false);
-//                response.setSilenceCall(false);
-//                response.setSkipCallLog(false);
-//                response.setSkipNotification(false);
-//                details.getHandle(); //This is the calling number
-//                callback.invoke(response.build());
-//        }
+    @Override
+    public void onHostResume() {
+        Log.d("LFC","resume");
     }
 
+    @Override
+    public void onHostPause() {
+        Log.d("LFC","puaese");
 
+    }
 
+    @Override
+    public void onHostDestroy() {
+        Log.d("LFC","destroy");
 
+    }
 }

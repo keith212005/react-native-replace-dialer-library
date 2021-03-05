@@ -10,8 +10,6 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
-
-
     <!--    For android 9 and higher to get incoming phone number-->
     <uses-permission android:name="android.permission.READ_CALL_LOG"/>
 
@@ -19,6 +17,13 @@
     <uses-permission android:name="android.permission.NEW_OUTGOING_CALL" />
     <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_PRECISE_PHONE_STATE"
+        tools:ignore="ProtectedPermissions" />
+
+    <!--    access proximity sensor and turn off display when phone is placed near to face-->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <uses-feature android:name="android.hardware.telephony"></uses-feature>
 
 
 
@@ -76,6 +81,7 @@
 
                   <intent-filter>
                       <action android:name="android.intent.action.NEW_OUTGOING_CALL" />
+                      <action android:name="android.intent.action.PRECISE_CALL_STATE" />
                   </intent-filter>
 
                   <intent-filter>

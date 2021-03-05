@@ -37,6 +37,7 @@ export default class CallScreen extends Component {
       microphone: false,
       callRecord: false,
       showKeypad: false,
+      addCall: false,
     };
     this.startListenerTapped();
     ReplaceDialer.getBluetoothName((name) => {
@@ -77,13 +78,16 @@ export default class CallScreen extends Component {
         } else if (event === 'Connected') {
           // Do something call got connected
           // This clause will only be executed for iOS
+          console.log('Connected...');
           this.setState({connected: true});
         } else if (event === 'Incoming') {
           // Do something call got incoming
+          console.log('incoming...');
           this.setState({connected: false});
         } else if (event === 'Dialing') {
           // Do something call got dialing
           // This clause will only be executed for iOS
+          console.log('dialing...');
           this.setState({connected: false});
         } else if (event === 'Offhook') {
           //Device call state: Off-hook.
@@ -91,10 +95,12 @@ export default class CallScreen extends Component {
           // active, or on hold,
           // and no calls are ringing or waiting.
           // This clause will only be executed for Android
+          console.log('offhook...');
           this.setState({connected: true});
         } else if (event === 'Missed') {
           // Do something call got missed
           // This clause will only be executed for Android
+          console.log('missed...');
           this.setState({connected: false});
           setTimeout(() => {
             ReplaceDialer.closeCurrentView();
@@ -169,10 +175,7 @@ export default class CallScreen extends Component {
   };
 
   handleAddCall = () => {
-    // const {holdCall} = this.state;
-    // this.setState({holdCall: !holdCall}, () => {
-    //   ReplaceDialer.makeConferenceCall();
-    // });
+    ReplaceDialer.makeConferenceCall();
   };
 
   handleHoldCall = () => {
@@ -205,6 +208,7 @@ export default class CallScreen extends Component {
       phoneNumber,
       showKeypad,
       holdCall,
+      addCall,
     } = this.state;
 
     return (
@@ -230,7 +234,7 @@ export default class CallScreen extends Component {
             <View style={styles.row}>
               <CustomButton
                 name="Add"
-                imageUri={image.plus_black}
+                imageUri={addCall ? image.plus_black : image.plus_gray}
                 imageStyle={{height: responsiveHeight(5)}}
                 onPress={this.handleAddCall}
                 buttonStyle={{padding: 30}}

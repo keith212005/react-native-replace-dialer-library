@@ -27,7 +27,7 @@ import {responsiveWidth, responsiveHeight, responsiveFonts} from '@resources';
 
 export default class DialScreen extends Component<{}> {
   state = {
-    phoneNumber: '9409005997',
+    phoneNumber: '666',
     speakerStatus: false,
   };
   componentDidMount() {
@@ -80,9 +80,11 @@ export default class DialScreen extends Component<{}> {
 
       switch (statuses['android.permission.CALL_PHONE']) {
         case RESULTS.GRANTED:
-          ReplaceDialer.callPhoneNumber(phoneNumber, (message) => {
-            console.log(message);
-          });
+          {
+            ReplaceDialer.callPhoneNumber(phoneNumber, (message) => {
+              console.log(message);
+            });
+          }
           break;
         case RESULTS.BLOCKED:
           Alert.alert(

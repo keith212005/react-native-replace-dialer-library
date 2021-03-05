@@ -3,9 +3,11 @@ package com.example;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.telecom.Call;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
@@ -29,6 +31,11 @@ import java.util.List;
 
 public class CallActivity extends Activity implements DefaultHardwareBackBtnHandler, PermissionAwareActivity {
 
+    // --------- for proximity sensor ---------------
+    private PowerManager powerManager;
+    private PowerManager.WakeLock wakeLock;
+    private int field = 0x00000020;
+    // ----------------------------------------------
     @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +43,9 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
 
         // Phone state listener
         startPhoneStateListener();
+
+        // Start Proximity sensor
+        startProximitySensorService();
 
         // Getting phone numnber when this activity is started
         String phoneNumber = getIntent().getStringExtra("phoneNumber");
@@ -70,14 +80,31 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
 
     }
 
+    private void startProximitySensorService() {
+        try {
+            // Yeah, this is hidden field.
+            field = PowerManager.class.getClass().getField("PROXIMITY_SCREEN_OFF_WAKE_LOCK").getInt(null);
+        } catch (Throwable ignored) {
+        }
+
+        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(field, getLocalClassName());
+        if (!wakeLock.isHeld()) {
+            wakeLock.acquire();
+        }
+    }
+
     public void startPhoneStateListener() {
         TelephonyManager telephony = (TelephonyManager) this.getApplicationContext().getSystemService(Context.TELEPHONY_SERVICE);
         telephony.listen(new PhoneStateListener() {
             @Override
             public void onCallStateChanged(int state, String incomingNumber) {
                 super.onCallStateChanged(state, incomingNumber);
-                System.out.println("incomingNumber : " + state + incomingNumber);
-                Log.d("kcal", "numbersss : " + state + incomingNumber);
+                System.out.println("kcal : " + state + incomingNumber);
+                Log.d("kcal", "numbersss : " +"state: " +state + "tel:"+incomingNumber);
+                AudioManager manager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+                boolean x = manager.getMode() == AudioManager.MODE_IN_CALL;
+                Log.e("kcal","" + x);
             }
         }, PhoneStateListener.LISTEN_CALL_STATE);
     }
@@ -133,6 +160,35 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (wakeLock.isHeld()) {
+            wakeLock.release();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (wakeLock.isHeld()) {
+            wakeLock.release();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!wakeLock.isHeld()) {
+            wakeLock.acquire();
+        }
+    }
+
+
+
+
+
 
 
 }

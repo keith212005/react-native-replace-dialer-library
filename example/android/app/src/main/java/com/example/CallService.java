@@ -3,6 +3,7 @@ package com.example;
 import android.net.Uri;
 import android.os.Build;
 import android.telecom.Call;
+import android.telecom.CallAudioState;
 import android.telecom.InCallService;
 import android.util.Log;
 
@@ -29,5 +30,8 @@ public class CallService extends InCallService {
         new OngoingCall().setCall(null);
     }
 
-
+    @Override
+    public void onBringToForeground(boolean showDialpad) {
+        super.onBringToForeground(showDialpad);
+    }
 }
