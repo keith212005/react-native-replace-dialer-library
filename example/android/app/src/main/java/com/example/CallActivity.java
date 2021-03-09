@@ -26,6 +26,8 @@ import com.facebook.react.modules.core.DefaultHardwareBackBtnHandler;
 import com.facebook.react.modules.core.PermissionAwareActivity;
 import com.facebook.react.modules.core.PermissionListener;
 import com.facebook.soloader.SoLoader;
+import com.reactlibrary.BuildConfig;
+import com.reactlibrary.OngoingCall;
 
 import java.util.List;
 
@@ -63,7 +65,7 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
                 .setCurrentActivity(this)
                 .setBundleAssetName("index.android.bundle")
                 .setJSMainModulePath("index.android")
-                .addPackages(packages)
+               .addPackages(packages)
                 .setUseDeveloperSupport(BuildConfig.DEBUG)
                 .setInitialLifecycleState(LifecycleState.RESUMED)
                 .build();

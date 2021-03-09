@@ -15,15 +15,12 @@
 
     <!--    For android 9 and higher to get outgoing phone number-->
     <uses-permission android:name="android.permission.NEW_OUTGOING_CALL" />
-    <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_PRECISE_PHONE_STATE"
         tools:ignore="ProtectedPermissions" />
 
     <!--    access proximity sensor and turn off display when phone is placed near to face-->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-    <uses-feature android:name="android.hardware.telephony"></uses-feature>
 
 
 
@@ -69,7 +66,7 @@
 
       <!-- ReplaceDialer Service -->
               <service
-                  android:name=".CallService"
+                  android:name="com.reactlibrary.CallService"
                   android:permission="android.permission.BIND_INCALL_SERVICE">
                   <meta-data
                       android:name="android.telecom.IN_CALL_SERVICE_UI"

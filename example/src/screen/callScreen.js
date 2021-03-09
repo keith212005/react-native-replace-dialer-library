@@ -175,13 +175,13 @@ export default class CallScreen extends Component {
   };
 
   handleAddCall = () => {
-    ReplaceDialer.makeConferenceCall();
+    ReplaceDialer.makeConferenceCall('8160626880');
   };
 
   handleHoldCall = () => {
     const {holdCall} = this.state;
     this.setState({holdCall: !holdCall}, () => {
-      ReplaceDialer.holdCall();
+      ReplaceDialer.holdCall(this.state.holdCall);
     });
   };
 
@@ -243,7 +243,7 @@ export default class CallScreen extends Component {
                 name="Hold"
                 imageUri={holdCall ? image.pause_gray : image.pause_black}
                 imageStyle={{height: responsiveHeight(5)}}
-                onPress={this.handleAddCall}
+                onPress={this.handleHoldCall}
                 buttonStyle={{padding: 30}}
               />
               <CustomButton

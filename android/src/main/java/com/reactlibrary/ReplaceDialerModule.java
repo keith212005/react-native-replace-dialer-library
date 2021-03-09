@@ -32,33 +32,69 @@ import com.facebook.react.bridge.BaseActivityEventListener;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.modules.core.PermissionAwareActivity;
 import com.facebook.react.modules.core.PermissionListener;
 
 import java.util.Set;
+import com.reactlibrary.OngoingCall;
 
 import static android.content.Context.POWER_SERVICE;
 
 public class ReplaceDialerModule extends ReactContextBaseJavaModule implements PermissionListener, LifecycleEventListener {
 
-    private final ReactApplicationContext mContext;
+    private  ReactApplicationContext mContext;
 
     // for default dialer
     AudioManager audioManager;
     TelecomManager telecomManager;
     private static final int RC_DEFAULT_PHONE = 3289;
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
     public ReplaceDialerModule(ReactApplicationContext context) {
         super(context);
         this.mContext = context;
         audioManager = (AudioManager) this.mContext.getSystemService(Context.AUDIO_SERVICE);
         audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
-        telecomManager = (TelecomManager) this.mContext.getSystemService(Context.TELECOM_SERVICE);
         mContext.addLifecycleEventListener(this);
+    }
+
+    public ReplaceDialerModule() {
+
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void openCallActivity(Context applicationContext, Call call) {
+
+        try {
+            Intent intent = null;
+            Class cls = Class.forName("com.example.CallActivity");
+            Log.d("classname",""+cls);
+            intent = new Intent(applicationContext, cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            String phoneNumber = getPhoneNumber(call);
+            Log.d("callActivity","void start class : " + phoneNumber);
+            intent.putExtra("phoneNumber", phoneNumber);
+            applicationContext.startActivity(intent);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private String getPhoneNumber(Call call) {
+        Uri uri = call.getDetails().getHandle();
+        Log.d("callActivity","void start class : " + uri);
+        String phoneNumber = uri.toString();
+        if(phoneNumber.contains("%2B"))
+        {
+            phoneNumber = phoneNumber.replace("%2B","+");
+        }
+        phoneNumber = phoneNumber.replace("tel:", "");
+        return phoneNumber;
     }
 
     @Override
@@ -121,25 +157,25 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void disconnectCall() {
-        try {
-            TelecomManager tm = null;
-            tm = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
-            if (tm != null) {
-                boolean success = false;
-                ActivityCompat.requestPermissions(mContext.getCurrentActivity(),
-                        new String[]{Manifest.permission.ANSWER_PHONE_CALLS},
-                        110);
-                Thread.sleep(100);
-                if (mContext.checkSelfPermission(Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED) {
-                    success = tm.endCall();
-                }
-                Log.d("TAG", "disconnectCall: " + success);
-
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(mContext, "FATAL ERROR: could not connect to telephony subsystem", Toast.LENGTH_LONG).show();
-        }
+      new OngoingCall().hangup();
+        // try {
+        //     TelecomManager tm = null;
+        //     tm = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
+        //     if (tm != null) {
+        //         boolean success = false;
+        //         ActivityCompat.requestPermissions(mContext.getCurrentActivity(),
+        //                 new String[]{Manifest.permission.ANSWER_PHONE_CALLS},
+        //                 110);
+        //         Thread.sleep(100);
+        //         if (mContext.checkSelfPermission(Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED) {
+        //             success = tm.endCall();
+        //         }
+        //         Log.d("TAG", "disconnectCall: " + success);
+        //     }
+        // } catch (Exception e) {
+        //     e.printStackTrace();
+        //     Toast.makeText(mContext, "FATAL ERROR: could not connect to telephony subsystem", Toast.LENGTH_LONG).show();
+        // }
     }
 
     // Turn speaker on/off
@@ -182,17 +218,18 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void acceptCall() {
-        TelecomManager tm = (TelecomManager) mContext
-                .getSystemService(Context.TELECOM_SERVICE);
-
-        if (tm == null) {
-            throw new NullPointerException("tm == null");
-        }
-
-        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ANSWER_PHONE_CALLS) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        tm.acceptRingingCall();
+      new OngoingCall().answer();
+        // TelecomManager tm = (TelecomManager) mContext
+        //         .getSystemService(Context.TELECOM_SERVICE);
+        //
+        // if (tm == null) {
+        //     throw new NullPointerException("tm == null");
+        // }
+        //
+        // if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ANSWER_PHONE_CALLS) != PackageManager.PERMISSION_GRANTED) {
+        //     return;
+        // }
+        // tm.acceptRingingCall();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
@@ -203,28 +240,44 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
-    public void makeConferenceCall() {
-        TelecomManager tm = (TelecomManager) mContext
-                .getSystemService(Context.TELECOM_SERVICE);
-
-        if (tm == null) {
-            throw new NullPointerException("tm == null");
+    public void makeConferenceCall(String phoneNumber) {
+        PermissionAwareActivity activity = (PermissionAwareActivity) getCurrentActivity();
+        if (activity == null) {
+            // Handle null case
         }
-
-        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ANSWER_PHONE_CALLS) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-
-        Uri uri = Uri.fromParts("tel", "12345", null);
-        Bundle extras = new Bundle();
-        extras.putBoolean(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, true);
-        tm.placeCall(uri, extras);
+        Toast.makeText(mContext, "" + phoneNumber, Toast.LENGTH_SHORT).show();
+        Uri uri = Uri.parse("tel:" + phoneNumber.trim());
+        Intent intent = new Intent(Intent.ACTION_CALL, uri);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra("phone_number", phoneNumber);
+        this.mContext.startActivity(intent);
+        OngoingCall.makeConferenceCall(phoneNumber);
+//        TelecomManager tm = (TelecomManager) mContext
+//                .getSystemService(Context.TELECOM_SERVICE);
+//
+//        if (tm == null) {
+//            throw new NullPointerException("tm == null");
+//        }
+//
+//        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ANSWER_PHONE_CALLS) != PackageManager.PERMISSION_GRANTED) {
+//            return;
+//        }
+//
+//        Uri uri = Uri.fromParts("tel", "12345", null);
+//        Bundle extras = new Bundle();
+//        extras.putBoolean(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, true);
+//        tm.placeCall(uri, extras);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
-    public void holdCall(Call.Details details) {
-
+    public void holdCall(boolean status) {
+        Log.d("holdstatus",""+status);
+        if(status) {
+            OngoingCall.hold();
+        } else {
+            OngoingCall.unhold();
+        }
     }
 
     @Override
