@@ -15,6 +15,11 @@ public class RecordService {
 
     private RecordService() {
         recorder = new MediaRecorder();
+        recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
+        recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
+        recorder.getMaxAmplitude();
+        recorder.setOutputFile(getFilePath());
     }
 
     public static RecordService getInstance() {
@@ -34,11 +39,14 @@ public class RecordService {
 
     public void startRecording() {
         try {
-            recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
-            recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-            recorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
-            recorder.getMaxAmplitude();
-            recorder.setOutputFile(getFilePath());
+            if(recorder == null){
+                recorder = new MediaRecorder();
+                recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
+                recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+                recorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
+                recorder.getMaxAmplitude();
+                recorder.setOutputFile(getFilePath());
+            }
             recorder.prepare();
             recorder.start();
         } catch (IOException e) {
