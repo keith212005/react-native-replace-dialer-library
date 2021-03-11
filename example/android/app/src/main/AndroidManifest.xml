@@ -22,6 +22,12 @@
     <!--    access proximity sensor and turn off display when phone is placed near to face-->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!--    To store recorded calls -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT"
+        tools:ignore="ProtectedPermissions" />
+
 
 
     <application

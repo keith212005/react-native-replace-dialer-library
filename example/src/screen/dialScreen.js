@@ -27,7 +27,7 @@ import {responsiveWidth, responsiveHeight, responsiveFonts} from '@resources';
 
 export default class DialScreen extends Component<{}> {
   state = {
-    phoneNumber: '666',
+    phoneNumber: '9409005997',
     speakerStatus: false,
   };
   componentDidMount() {

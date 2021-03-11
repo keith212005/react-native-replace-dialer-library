@@ -17,10 +17,8 @@ public class CallService extends InCallService {
     public void onCallAdded(Call call) {
         super.onCallAdded(call);
         new OngoingCall().setCall(call);
-//        CallActivity.start(getApplicationContext(), call);
-        ReplaceDialerModule rd = new ReplaceDialerModule();
-        Log.d("appcontext", String.valueOf(getApplicationContext()));
-        rd.openCallActivity(getApplicationContext(),call);
+        ReplaceDialerModule replaceDialerModule = new ReplaceDialerModule();
+        replaceDialerModule.openCallActivity(getApplicationContext(),call);
     }
 
 

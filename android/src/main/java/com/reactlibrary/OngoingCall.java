@@ -3,11 +3,17 @@ package com.reactlibrary;
 import android.os.Build;
 
 import android.telecom.Call;
+import android.telecom.Conference;
 import android.telecom.VideoProfile;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+
+import com.facebook.react.bridge.ReactContext;
+
+import java.util.List;
+
 import io.reactivex.subjects.BehaviorSubject;
 
 public class OngoingCall {
@@ -64,11 +70,9 @@ public class OngoingCall {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
-    public static void makeConferenceCall(String phoneNumber){
+    public static void makeConferenceCall(){
         assert call != null;
-        Log.d("conferencecalls",""+call.getConferenceableCalls());
-
-
+        Log.d("conferencecalls",""+call.getDetails());
     }
 
 }

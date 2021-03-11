@@ -1,60 +1,56 @@
 package com.reactlibrary;
 
 import android.Manifest;
-import android.app.Activity;
-import android.app.Application;
 import android.app.role.RoleManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.hardware.Sensor;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.media.AudioManager;
+import android.media.AudioRecord;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.PowerManager;
+import android.os.Environment;
 import android.telecom.Call;
 import android.telecom.TelecomManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
-import com.facebook.react.bridge.ActivityEventListener;
-import com.facebook.react.bridge.BaseActivityEventListener;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.modules.core.PermissionAwareActivity;
 import com.facebook.react.modules.core.PermissionListener;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Date;
 import java.util.Set;
-import com.reactlibrary.OngoingCall;
 
-import static android.content.Context.POWER_SERVICE;
 
 public class ReplaceDialerModule extends ReactContextBaseJavaModule implements PermissionListener, LifecycleEventListener {
 
-    private  ReactApplicationContext mContext;
+    private ReactApplicationContext mContext;
 
     // for default dialer
     AudioManager audioManager;
-    TelecomManager telecomManager;
+    RecordService recordService;
+    private final int MY_PERMISSIONS_RECORD_AUDIO = 1;
     private static final int RC_DEFAULT_PHONE = 3289;
 
     public ReplaceDialerModule(ReactApplicationContext context) {
         super(context);
         this.mContext = context;
+        recordService = RecordService.getInstance();
         audioManager = (AudioManager) this.mContext.getSystemService(Context.AUDIO_SERVICE);
         audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
@@ -72,10 +68,10 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         try {
             Intent intent = null;
             Class cls = Class.forName("com.example.CallActivity");
-            Log.d("classname",""+cls);
+            Log.d("classname", "" + cls);
             intent = new Intent(applicationContext, cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             String phoneNumber = getPhoneNumber(call);
-            Log.d("callActivity","void start class : " + phoneNumber);
+            Log.d("callActivity", "void start class : " + phoneNumber);
             intent.putExtra("phoneNumber", phoneNumber);
             applicationContext.startActivity(intent);
         } catch (ClassNotFoundException e) {
@@ -87,11 +83,10 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @RequiresApi(api = Build.VERSION_CODES.M)
     private String getPhoneNumber(Call call) {
         Uri uri = call.getDetails().getHandle();
-        Log.d("callActivity","void start class : " + uri);
+        Log.d("callActivity", "void start class : " + uri);
         String phoneNumber = uri.toString();
-        if(phoneNumber.contains("%2B"))
-        {
-            phoneNumber = phoneNumber.replace("%2B","+");
+        if (phoneNumber.contains("%2B")) {
+            phoneNumber = phoneNumber.replace("%2B", "+");
         }
         phoneNumber = phoneNumber.replace("tel:", "");
         return phoneNumber;
@@ -153,30 +148,6 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         return false;
     }
 
-    // disconnects call
-    @RequiresApi(api = Build.VERSION_CODES.R)
-    @ReactMethod
-    public void disconnectCall() {
-      new OngoingCall().hangup();
-        // try {
-        //     TelecomManager tm = null;
-        //     tm = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
-        //     if (tm != null) {
-        //         boolean success = false;
-        //         ActivityCompat.requestPermissions(mContext.getCurrentActivity(),
-        //                 new String[]{Manifest.permission.ANSWER_PHONE_CALLS},
-        //                 110);
-        //         Thread.sleep(100);
-        //         if (mContext.checkSelfPermission(Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED) {
-        //             success = tm.endCall();
-        //         }
-        //         Log.d("TAG", "disconnectCall: " + success);
-        //     }
-        // } catch (Exception e) {
-        //     e.printStackTrace();
-        //     Toast.makeText(mContext, "FATAL ERROR: could not connect to telephony subsystem", Toast.LENGTH_LONG).show();
-        // }
-    }
 
     // Turn speaker on/off
     @ReactMethod
@@ -218,18 +189,16 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void acceptCall() {
-      new OngoingCall().answer();
-        // TelecomManager tm = (TelecomManager) mContext
-        //         .getSystemService(Context.TELECOM_SERVICE);
-        //
-        // if (tm == null) {
-        //     throw new NullPointerException("tm == null");
-        // }
-        //
-        // if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ANSWER_PHONE_CALLS) != PackageManager.PERMISSION_GRANTED) {
-        //     return;
-        // }
-        // tm.acceptRingingCall();
+        new OngoingCall().answer();
+    }
+
+    // disconnects call
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    @ReactMethod
+    public void disconnectCall() {
+        new OngoingCall().hangup();
+        // stop record after disconnect
+        recordService.stopRecording();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
@@ -238,62 +207,66 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         mContext.getCurrentActivity().finishAndRemoveTask();
     }
 
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    public void closeCurrentActivity() {
+        mContext.getCurrentActivity().finishAndRemoveTask();
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
-    public void makeConferenceCall(String phoneNumber) {
-        PermissionAwareActivity activity = (PermissionAwareActivity) getCurrentActivity();
-        if (activity == null) {
-            // Handle null case
+    public void makeConferenceCall() {
+        Intent intent = null;
+        Class cls = null;
+        try {
+            cls = Class.forName("com.example.MainActivity");
+            Log.d("classname", "" + cls);
+            intent = new Intent(getReactApplicationContext(), cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getReactApplicationContext().startActivity(intent);
+            OngoingCall.makeConferenceCall();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
-        Toast.makeText(mContext, "" + phoneNumber, Toast.LENGTH_SHORT).show();
-        Uri uri = Uri.parse("tel:" + phoneNumber.trim());
-        Intent intent = new Intent(Intent.ACTION_CALL, uri);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra("phone_number", phoneNumber);
-        this.mContext.startActivity(intent);
-        OngoingCall.makeConferenceCall(phoneNumber);
-//        TelecomManager tm = (TelecomManager) mContext
-//                .getSystemService(Context.TELECOM_SERVICE);
-//
-//        if (tm == null) {
-//            throw new NullPointerException("tm == null");
-//        }
-//
-//        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ANSWER_PHONE_CALLS) != PackageManager.PERMISSION_GRANTED) {
-//            return;
-//        }
-//
-//        Uri uri = Uri.fromParts("tel", "12345", null);
-//        Bundle extras = new Bundle();
-//        extras.putBoolean(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, true);
-//        tm.placeCall(uri, extras);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void holdCall(boolean status) {
-        Log.d("holdstatus",""+status);
-        if(status) {
+        Log.d("holdstatus", "" + status);
+        if (status) {
             OngoingCall.hold();
         } else {
             OngoingCall.unhold();
         }
     }
 
+    @ReactMethod
+    public void startRecord(boolean status) {
+        if (ActivityCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getCurrentActivity(), new String[]{Manifest.permission.RECORD_AUDIO},0);
+        } else {
+            if(status == true) {
+                recordService.startRecording();
+            } else {
+                recordService.stopRecording();
+            }
+        }
+    }
+
     @Override
     public void onHostResume() {
-        Log.d("LFC","resume");
+        Log.d("LFC", "resume");
     }
 
     @Override
     public void onHostPause() {
-        Log.d("LFC","puaese");
+        Log.d("LFC", "puaese");
 
     }
 
     @Override
     public void onHostDestroy() {
-        Log.d("LFC","destroy");
+        Log.d("LFC", "destroy");
 
     }
 }

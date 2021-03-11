@@ -162,7 +162,9 @@ export default class CallScreen extends Component {
 
   handleCallRecord = () => {
     const {callRecord} = this.state;
-    this.setState({callRecord: !callRecord});
+    this.setState({callRecord: !callRecord}, () => {
+      ReplaceDialer.startRecord(this.state.callRecord);
+    });
   };
 
   handleBluetooth = () => {
@@ -175,7 +177,7 @@ export default class CallScreen extends Component {
   };
 
   handleAddCall = () => {
-    ReplaceDialer.makeConferenceCall('8160626880');
+    ReplaceDialer.makeConferenceCall();
   };
 
   handleHoldCall = () => {
