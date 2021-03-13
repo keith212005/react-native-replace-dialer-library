@@ -29,7 +29,9 @@ import com.facebook.soloader.SoLoader;
 import com.reactlibrary.BuildConfig;
 import com.reactlibrary.OngoingCall;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class CallActivity extends Activity implements DefaultHardwareBackBtnHandler, PermissionAwareActivity {
 
@@ -49,11 +51,20 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
         // Start Proximity sensor
         startProximitySensorService();
 
-        Bundle extras = getIntent().getExtras();
-        String phoneNumber = extras.getString("phoneNumber");
-        String isIncoming2 = extras.getString("in");
-
-        Log.d("callActivity","onCreeate() = "+ phoneNumber + " - "+isIncoming2);
+//        Bundle extras = getIntent().getExtras();
+//        if (extras != null) {
+//            Set<String> keys = extras.keySet();
+//            Iterator<String> it = keys.iterator();
+//            Log.e("callActivity","Dumping Intent start");
+//            while (it.hasNext()) {
+//                String key = it.next();
+//                Log.e("callActivity","[" + key + "=" + extras.get(key)+"]");
+//            }
+//            Log.e("callActivity","Dumping Intent end");
+//        }
+//        String phoneNumber = extras.getString("phoneNumber");
+//
+//        Log.d("callActivity","onCreeate() = "+ phoneNumber  );
 
         SoLoader.init(this, false);
         ReactRootView mReactRootView = new ReactRootView(this);
@@ -72,8 +83,8 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
         // the string in AppRegistry.registerComponent() in index.js
         Bundle initialProps = new Bundle();
         initialProps.putString("initialScreenName", "CallScreen");
-        initialProps.putString("outgoingNumber", phoneNumber);
-        initialProps.putString("isIncoming", isIncoming2);
+        initialProps.putString("outgoingNumber", getIntent().getStringExtra("phoneNumber"));
+        initialProps.putString("callType", getIntent().getStringExtra("callType"));
         mReactRootView.startReactApplication(mReactInstanceManager, "example", initialProps);
         setContentView(mReactRootView);
 
@@ -110,30 +121,11 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
         }, PhoneStateListener.LISTEN_CALL_STATE);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
     public static void start(Context context, Call call) {
         Intent intent = new Intent(context, com.example.CallActivity.class)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//        String phoneNumber = getPhoneNumber(call);
-//        Bundle extras = new Bundle();
-//        extras.putString("phoneNumber","phoneNumber");
-//        extras.putString("in","incoming");
-//        intent.putExtras(extras);
         context.startActivity(intent);
     }
-
-    @RequiresApi(api = Build.VERSION_CODES.R)
-    private static String getPhoneNumber(Call call) {
-        Uri uri = call.getDetails().getHandle();
-        String phoneNumber = uri.toString();
-        if(phoneNumber.contains("%2B"))
-        {
-            phoneNumber = phoneNumber.replace("%2B","+");
-        }
-        phoneNumber = phoneNumber.replace("tel:", "");
-        return phoneNumber;
-    }
-
 
     @Override
     public void invokeDefaultOnBackPressed() {

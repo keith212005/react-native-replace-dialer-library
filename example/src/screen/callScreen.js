@@ -23,11 +23,12 @@ import {Stopwatch, Timer} from 'react-native-stopwatch-timer';
 export default class CallScreen extends Component {
   constructor(props) {
     super(props);
-    console.log('phone$$$', props.route.params.outGoingNumber);
-    const {outGoingNumber} = this.props.route.params;
+    const {outGoingNumber, callType} = this.props.route.params;
+    console.log('All Params = ', this.props.route.params);
     this.state = {
       connected: false,
-      callType: '',
+      eventType: '',
+      callType: callType,
       startTimer: true,
       showTimer: false,
       phoneNumber: outGoingNumber ? outGoingNumber : '',
@@ -59,7 +60,7 @@ export default class CallScreen extends Component {
   startListenerTapped() {
     this.callDetector = new CallDetectorManager(
       (event, phoneNumber) => {
-        this.setState({callType: event});
+        this.setState({eventType: event});
 
         // For iOS event will be either "Connected",
         // "Disconnected","Dialing" and "Incoming"
@@ -206,12 +207,13 @@ export default class CallScreen extends Component {
       microphone,
       showTimer,
       startTimer,
-      callType,
+      eventType,
       callRecord,
       phoneNumber,
       showKeypad,
       holdCall,
       addCall,
+      callType,
     } = this.state;
 
     return (
@@ -219,11 +221,7 @@ export default class CallScreen extends Component {
         <StatusBar barStyle={'dark-content'} />
         <SafeAreaView style={styles.container}>
           <View style={styles.subContainer1}>
-            {callType === 'Dialing' || callType === 'Offhook' ? (
-              <Text style={styles.calling}>Calling...</Text>
-            ) : (
-              <Text style={styles.calling}>{callType}</Text>
-            )}
+            <Text style={styles.calling}>{callType}</Text>
 
             <Text style={styles.phoneNumber}>
               {phoneNumber ? phoneNumber : ''}
@@ -231,6 +229,12 @@ export default class CallScreen extends Component {
 
             {/* Show timer when user pick up call */}
             {showTimer ? <CallTimer startTimer={startTimer} /> : null}
+
+            {eventType == 'Disconnected' || eventType == 'Missed' ? (
+              <Text>{eventType}</Text>
+            ) : (
+              <Text></Text>
+            )}
           </View>
 
           <View style={styles.subContainer2}>
@@ -292,7 +296,7 @@ export default class CallScreen extends Component {
           </View>
 
           <View style={styles.subContainer3}>
-            {callType === 'Incoming' || callType === 'Missed'
+            {eventType === 'Incoming' || eventType === 'Missed'
               ? this.incomingView()
               : this.callAnsweredView()}
           </View>
@@ -319,7 +323,7 @@ const styles = StyleSheet.create({
   },
   calling: {
     textAlign: 'center',
-    paddingTop: 10,
+
     fontSize: 22,
     color: 'gray',
   },

@@ -55,6 +55,8 @@ export default class DialScreen extends Component<{}> {
       requestMultiple([
         PERMISSIONS.ANDROID.CALL_PHONE,
         PERMISSIONS.ANDROID.READ_CALL_LOG,
+        PERMISSIONS.ANDROID.RECORD_AUDIO,
+        PERMISSIONS.WRITE_EXTERNAL_STORAGE,
       ]).then((statuses) => {
         resolve(statuses);
       });
@@ -66,6 +68,8 @@ export default class DialScreen extends Component<{}> {
       checkMultiple([
         PERMISSIONS.ANDROID.CALL_PHONE,
         PERMISSIONS.ANDROID.READ_CALL_LOG,
+        PERMISSIONS.ANDROID.RECORD_AUDIO,
+        PERMISSIONS.WRITE_EXTERNAL_STORAGE,
       ]).then((statuses) => {
         resolve(statuses);
       });

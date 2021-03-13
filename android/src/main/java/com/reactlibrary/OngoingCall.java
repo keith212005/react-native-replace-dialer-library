@@ -47,25 +47,33 @@ public class OngoingCall {
     @RequiresApi(api = Build.VERSION_CODES.R)
     public void answer() {
         assert call != null;
-        call.answer(VideoProfile.STATE_AUDIO_ONLY);
+        if(call != null) {
+            call.answer(VideoProfile.STATE_AUDIO_ONLY);
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     public void hangup() {
         assert call != null;
-        call.disconnect();
+        if(call != null) {
+            call.disconnect();
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     public static void hold() {
         assert call != null;
-        call.hold();
+        if(call != null) {
+            call.hold();
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     public static void unhold() {
         assert call != null;
-        call.unhold();
+        if(call != null) {
+            call.unhold();
+        }
 
     }
 

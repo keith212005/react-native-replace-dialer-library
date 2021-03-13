@@ -25,8 +25,6 @@ export default class AppContainer extends React.Component {
   );
 
   render(props) {
-    console.log('StackNavScree>>>', this.props);
-
     return (
       <>
         <StatusBar
@@ -47,6 +45,7 @@ export default class AppContainer extends React.Component {
             {this._addScreen('DialScreen')}
             {this._addScreen('CallScreen', false, null, {
               outGoingNumber: this.props.outGoingNumber,
+              callType: this.props.callType,
             })}
           </Stack.Navigator>
         </NavigationContainer>

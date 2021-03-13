@@ -1,6 +1,5 @@
 package com.reactlibrary;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.role.RoleManager;
 import android.bluetooth.BluetoothAdapter;
@@ -52,12 +51,14 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         this.mContext.addLifecycleEventListener(this);
     }
 
+
+
     @Override
     public String getName() {
         return "ReplaceDialer";
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.R)
     public void openCallActivity(Context applicationContext, Call call) {
 
         try {
@@ -67,12 +68,21 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
             intent = new Intent(applicationContext, cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             String phoneNumber = getPhoneNumber(call);
             Log.d("callActivity", "void start class : " + phoneNumber);
-            intent.putExtra("phoneNumber", phoneNumber);
+            intent.putExtra("phoneNumber", getPhoneNumber(call));
+            intent.putExtra("callType",getCallType(call));
             applicationContext.startActivity(intent);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+    }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    private String getCallType(Call call) {
+        if(call.getState() == Call.STATE_RINGING){
+            return "Incoming";
+        } else {
+            return "Calling...";
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
