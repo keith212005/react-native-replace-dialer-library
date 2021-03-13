@@ -49,6 +49,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         audioManager = (AudioManager) this.mContext.getSystemService(Context.AUDIO_SERVICE);
         audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
+        this.mContext.addLifecycleEventListener(this);
     }
 
     @Override
@@ -185,7 +186,9 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void closeCurrentView() {
-//        RecordService.getInstance().stopRecording();
+        if(RecordService.getInstance().isRecording) {
+            RecordService.getInstance().stopRecording();
+        }
         mContext.getCurrentActivity().finishAndRemoveTask();
     }
 
@@ -208,7 +211,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void holdCall(boolean status) {
-        Log.d("holdstatus", "" + status);
+        Log.d("ReplaceDialerModule", "hold status = " + status);
         if (status) {
             OngoingCall.hold();
         } else {
@@ -249,21 +252,22 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     @Override
     public void onHostResume() {
-        Log.d("LFC","onHostResume");
+        Log.d("ReplaceDialerModule","onHostResume");
     }
 
     @Override
     public void onHostPause() {
-        Log.d("LFC","onHostPause");
+        Log.d("ReplaceDialerModule","onHostPause");
     }
 
     @Override
     public void onHostDestroy() {
-        Log.d("LFC","onHostDestroy");
+        Log.d("ReplaceDialerModule","onHostDestroy");
     }
 
     @Override
     public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
+        Log.d("c","onActivityResult called ... "+ requestCode + resultCode );
 
     }
 

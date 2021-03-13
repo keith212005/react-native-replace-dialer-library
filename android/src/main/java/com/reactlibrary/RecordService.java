@@ -1,13 +1,11 @@
 package com.reactlibrary;
 
-import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Environment;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
-import java.util.Date;
 
 public class RecordService {
     private static RecordService mInstance;
@@ -64,6 +62,10 @@ public class RecordService {
             recorder = null;
             isRecording = false;
         }
+    }
+
+    public boolean isRecording(){
+        return isRecording;
     }
 
 
