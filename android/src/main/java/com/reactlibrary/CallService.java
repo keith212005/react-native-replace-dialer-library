@@ -9,10 +9,10 @@ import android.util.Log;
 import androidx.annotation.RequiresApi;
 
 
-@RequiresApi(api = Build.VERSION_CODES.M)
+@RequiresApi(api = Build.VERSION_CODES.R)
 public class CallService extends InCallService {
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
+
     @Override
     public void onCallAdded(Call call) {
         super.onCallAdded(call);
@@ -22,7 +22,6 @@ public class CallService extends InCallService {
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     public void onCallRemoved(Call call) {
         super.onCallRemoved(call);

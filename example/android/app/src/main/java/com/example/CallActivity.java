@@ -49,16 +49,15 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
         // Start Proximity sensor
         startProximitySensorService();
 
-        // Getting phone numnber when this activity is started
-        String phoneNumber = getIntent().getStringExtra("phoneNumber");
-        Log.d("CallActivity","onCreeate() = "+ phoneNumber);
+        Bundle extras = getIntent().getExtras();
+        String phoneNumber = extras.getString("phoneNumber");
+        String isIncoming2 = extras.getString("in");
+
+        Log.d("callActivity","onCreeate() = "+ phoneNumber + " - "+isIncoming2);
 
         SoLoader.init(this, false);
         ReactRootView mReactRootView = new ReactRootView(this);
         List<ReactPackage> packages = new PackageList(getApplication()).getPackages();
-        // Packages that cannot be autolinked yet can be added manually here, for example:
-        // packages.add(new MyReactNativePackage());
-        // Remember to include them in `settings.gradle` and `app/build.gradle` too.
 
         ReactInstanceManager mReactInstanceManager = ReactInstanceManager.builder()
                 .setApplication(getApplication())
@@ -74,6 +73,7 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
         Bundle initialProps = new Bundle();
         initialProps.putString("initialScreenName", "CallScreen");
         initialProps.putString("outgoingNumber", phoneNumber);
+        initialProps.putString("isIncoming", isIncoming2);
         mReactRootView.startReactApplication(mReactInstanceManager, "example", initialProps);
         setContentView(mReactRootView);
 
@@ -84,7 +84,6 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
 
     private void startProximitySensorService() {
         try {
-            // Yeah, this is hidden field.
             field = PowerManager.class.getClass().getField("PROXIMITY_SCREEN_OFF_WAKE_LOCK").getInt(null);
         } catch (Throwable ignored) {
         }
@@ -112,27 +111,20 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
-    public void endCall(Callback myCallback) {
-        new OngoingCall().hangup();
-    }
-
-
-    @RequiresApi(api = Build.VERSION_CODES.R)
     public static void start(Context context, Call call) {
-        // passing phone number when when the call is incoming / outgoing
         Intent intent = new Intent(context, com.example.CallActivity.class)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-        String phoneNumber = getPhoneNumber(call);
-        Log.d("callActivity","void start class : " + phoneNumber);
-        intent.putExtra("phoneNumber", phoneNumber);
+//        String phoneNumber = getPhoneNumber(call);
+//        Bundle extras = new Bundle();
+//        extras.putString("phoneNumber","phoneNumber");
+//        extras.putString("in","incoming");
+//        intent.putExtras(extras);
         context.startActivity(intent);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     private static String getPhoneNumber(Call call) {
         Uri uri = call.getDetails().getHandle();
-        Log.d("callActivity","void start class : " + uri);
         String phoneNumber = uri.toString();
         if(phoneNumber.contains("%2B"))
         {

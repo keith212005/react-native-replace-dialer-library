@@ -39,17 +39,18 @@ export default class CallScreen extends Component {
       showKeypad: false,
       addCall: false,
     };
-    this.startListenerTapped();
-    ReplaceDialer.getBluetoothName((name) => {
-      this.setState({bluetoothName: name});
-    });
   }
 
   stopListenerTapped() {
     this.callDetector && this.callDetector.dispose();
   }
 
-  componentDidMount() {}
+  componentDidMount() {
+    this.startListenerTapped();
+    ReplaceDialer.getBluetoothName((name) => {
+      this.setState({bluetoothName: name});
+    });
+  }
 
   componentWillUnmount() {
     this.stopListenerTapped();

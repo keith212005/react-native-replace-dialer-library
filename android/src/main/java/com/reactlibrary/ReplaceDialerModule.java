@@ -1,6 +1,7 @@
 package com.reactlibrary;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.role.RoleManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -8,12 +9,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.telecom.Call;
 import android.telecom.TelecomManager;
 import android.util.Log;
@@ -21,8 +19,8 @@ import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
+import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -31,36 +29,32 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.modules.core.PermissionAwareActivity;
 import com.facebook.react.modules.core.PermissionListener;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Date;
 import java.util.Set;
 
 
-public class ReplaceDialerModule extends ReactContextBaseJavaModule implements PermissionListener, LifecycleEventListener {
+public class ReplaceDialerModule extends ReactContextBaseJavaModule implements PermissionListener, LifecycleEventListener,ActivityEventListener {
 
     private ReactApplicationContext mContext;
 
     // for default dialer
     AudioManager audioManager;
-    RecordService recordService;
-    private final int MY_PERMISSIONS_RECORD_AUDIO = 1;
     private static final int RC_DEFAULT_PHONE = 3289;
+
+    public ReplaceDialerModule() {
+    }
 
     public ReplaceDialerModule(ReactApplicationContext context) {
         super(context);
         this.mContext = context;
-        recordService = RecordService.getInstance();
         audioManager = (AudioManager) this.mContext.getSystemService(Context.AUDIO_SERVICE);
         audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
-        mContext.addLifecycleEventListener(this);
     }
 
-    public ReplaceDialerModule() {
-
+    @Override
+    public String getName() {
+        return "ReplaceDialer";
     }
-
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     public void openCallActivity(Context applicationContext, Call call) {
@@ -90,11 +84,6 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         }
         phoneNumber = phoneNumber.replace("tel:", "");
         return phoneNumber;
-    }
-
-    @Override
-    public String getName() {
-        return "ReplaceDialer";
     }
 
     // returns true if app set as default dialer else false
@@ -148,20 +137,16 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         return false;
     }
 
-
-    // Turn speaker on/off
     @ReactMethod
     public void toggleSpeakerOnOff() {
         audioManager.setSpeakerphoneOn(audioManager.isSpeakerphoneOn() ? false : true);
     }
 
-    // Turn mic on/off
     @ReactMethod
     public void toggleMicOnOff() {
         audioManager.setMicrophoneMute(audioManager.isMicrophoneMute() ? false : true);
     }
 
-    // Retun the name of the connected device
     @ReactMethod
     public void getBluetoothName(Callback callback) {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -185,31 +170,22 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         }
     }
 
-    // Accept incoming call
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void acceptCall() {
         new OngoingCall().answer();
     }
 
-    // disconnects call
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void disconnectCall() {
         new OngoingCall().hangup();
-        // stop record after disconnect
-        recordService.stopRecording();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void closeCurrentView() {
-        mContext.getCurrentActivity().finishAndRemoveTask();
-    }
-
-
-    @RequiresApi(api = Build.VERSION_CODES.R)
-    public void closeCurrentActivity() {
+//        RecordService.getInstance().stopRecording();
         mContext.getCurrentActivity().finishAndRemoveTask();
     }
 
@@ -242,31 +218,58 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     @ReactMethod
     public void startRecord(boolean status) {
-        if (ActivityCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getCurrentActivity(), new String[]{Manifest.permission.RECORD_AUDIO},0);
-        } else {
-            if(status == true) {
-                recordService.startRecording();
+        int PERMISSION_ALL = 1;
+        String[] PERMISSIONS = {
+                android.Manifest.permission.RECORD_AUDIO,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        };
+
+        if (!hasPermissions(mContext, PERMISSIONS)) {
+            ActivityCompat.requestPermissions(getCurrentActivity(), PERMISSIONS, PERMISSION_ALL);
+        }  else {
+            if (status == true) {
+                RecordService.getInstance().startRecording();
             } else {
-                recordService.stopRecording();
+                RecordService.getInstance().stopRecording();
             }
         }
     }
 
+    public static boolean hasPermissions(Context context, String... permissions) {
+        if (context != null && permissions != null) {
+            for (String permission : permissions) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+
     @Override
     public void onHostResume() {
-        Log.d("LFC", "resume");
+        Log.d("LFC","onHostResume");
     }
 
     @Override
     public void onHostPause() {
-        Log.d("LFC", "puaese");
-
+        Log.d("LFC","onHostPause");
     }
 
     @Override
     public void onHostDestroy() {
-        Log.d("LFC", "destroy");
+        Log.d("LFC","onHostDestroy");
+    }
+
+    @Override
+    public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
+
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
 
     }
 }
+

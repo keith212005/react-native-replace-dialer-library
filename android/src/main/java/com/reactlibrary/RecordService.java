@@ -6,12 +6,13 @@ import android.os.Environment;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
 
 public class RecordService {
     private static RecordService mInstance;
     private MediaRecorder recorder;
-    public String fileextn =  "Call Record_" + new Date().getTime() + ".mp4";
+    boolean isRecording = false;
 
     private RecordService() {
         recorder = new MediaRecorder();
@@ -34,12 +35,12 @@ public class RecordService {
         File file = new File(filepath, "MediaRecorderSample");
         if (!file.exists())
             file.mkdirs();
-        return (file.getAbsolutePath() + "/" + fileextn);
+        return (file.getAbsolutePath() + "/" + "Call Record_" + Calendar.getInstance().getTime() + ".mp4");
     }
 
     public void startRecording() {
         try {
-            if(recorder == null){
+            if(recorder == null && isRecording == false){
                 recorder = new MediaRecorder();
                 recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
                 recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
@@ -49,17 +50,19 @@ public class RecordService {
             }
             recorder.prepare();
             recorder.start();
+            isRecording = true;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void stopRecording() {
-        if (recorder != null) {
+        if (recorder != null && isRecording == true) {
             recorder.stop();
             recorder.reset();
             recorder.release();
             recorder = null;
+            isRecording = false;
         }
     }
 
