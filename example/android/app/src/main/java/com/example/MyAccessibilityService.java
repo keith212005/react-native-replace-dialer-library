@@ -169,7 +169,7 @@ public class MyAccessibilityService extends AccessibilityService {
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("recording Service")
                 .setContentText("Start")
-                .setSmallIcon(R.drawable.record_black)
+                .setSmallIcon(R.drawable.record_b)
                 .setContentIntent(pendingIntent)
                 .build();
         startForeground(1, notification);

@@ -51,21 +51,6 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
         // Start Proximity sensor
         startProximitySensorService();
 
-//        Bundle extras = getIntent().getExtras();
-//        if (extras != null) {
-//            Set<String> keys = extras.keySet();
-//            Iterator<String> it = keys.iterator();
-//            Log.e("callActivity","Dumping Intent start");
-//            while (it.hasNext()) {
-//                String key = it.next();
-//                Log.e("callActivity","[" + key + "=" + extras.get(key)+"]");
-//            }
-//            Log.e("callActivity","Dumping Intent end");
-//        }
-//        String phoneNumber = extras.getString("phoneNumber");
-//
-//        Log.d("callActivity","onCreeate() = "+ phoneNumber  );
-
         SoLoader.init(this, false);
         ReactRootView mReactRootView = new ReactRootView(this);
         List<ReactPackage> packages = new PackageList(getApplication()).getPackages();
@@ -90,7 +75,6 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
 
         // this will show incoming screen while device is locked
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
-
     }
 
     private void startProximitySensorService() {

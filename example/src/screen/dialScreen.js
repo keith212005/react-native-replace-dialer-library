@@ -160,7 +160,7 @@ export default class DialScreen extends Component<{}> {
           <TouchableOpacity
             style={{flex: 4}}
             onPress={() => this.onPressClear()}>
-            <Image style={styles.clearBtn} source={{uri: image.clear_symbol}} />
+            <Image style={styles.clearBtn} source={{uri: image.clear_b}} />
           </TouchableOpacity>
         </View>
       </View>
