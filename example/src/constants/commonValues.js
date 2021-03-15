@@ -6,6 +6,6 @@ export const constant = {
   SPEAKER: 'Speaker',
   MUTE: 'Mute',
   KEYPAD: 'Keypad',
-  ANSWERCALL: 'Accept',
-  ENDCALL: 'REJECT',
+  ACCEPTCALL: 'Accept',
+  REJECTCALL: 'Reject',
 };

@@ -41,12 +41,13 @@ export default class CallScreen extends Component {
     super(props);
     const {outGoingNumber, callType} = this.props.route.params;
     console.log('All Params = ', this.props.route.params);
+    this.startCallListener();
     this.state = {
       connected: false,
-      eventType: '',
+      event: '',
       callType: callType,
-      startTimer: true,
-      showTimer: false,
+      stopwatchShow: false,
+      stopwatchStart: true,
       phoneNumber: outGoingNumber ? outGoingNumber : '',
       blutName: constant.BLUT,
       speaker: false,
@@ -63,7 +64,6 @@ export default class CallScreen extends Component {
   }
 
   componentDidMount() {
-    this.startCallListener();
     ReplaceDialer.getBluetoothName((name) => {
       this.setState({blutName: name});
     });
@@ -76,7 +76,8 @@ export default class CallScreen extends Component {
   startCallListener() {
     this.callDetector = new CallDetectorManager(
       (event, phoneNumber) => {
-        this.setState({eventType: event});
+        console.log('call listener event = ', event);
+        this.setState({event: event});
 
         // For iOS event will be either "Connected",
         // "Disconnected","Dialing" and "Incoming"
@@ -88,10 +89,10 @@ export default class CallScreen extends Component {
         console.log('startCallListener2 >> ', event, phoneNumber);
         if (event === 'Disconnected') {
           // Do something call got disconnected
-          this.setState({connected: false, startTimer: false}, () => {
+          this.setState({connected: false, stopwatchStart: false}, () => {
             setTimeout(() => {
               ReplaceDialer.closeCurrentView();
-            }, 1000);
+            }, 3000);
           });
         } else if (event === 'Connected') {
           // Do something call got connected
@@ -142,17 +143,21 @@ export default class CallScreen extends Component {
       <View style={styles.incomingViewContainer}>
         <TouchableOpacity
           style={{flexDirection: 'column'}}
-          onPress={() => this._handleCall('AnswerCall')}>
+          onPress={() => this._handleCall(constant.ACCEPTCALL)}>
           <Image
             style={styles.receiveCall}
             source={{uri: image.recieveCallButton}}
           />
-          <Text style={{textAlign: 'center', marginTop: 5}}>Accept</Text>
+          <Text style={{textAlign: 'center', marginTop: 5}}>
+            {constant.ACCEPTCALL}
+          </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => this._handleCall('EndCall')}>
+        <TouchableOpacity onPress={() => this._handleCall(constant.REJECTCALL)}>
           <Image style={styles.endCall} source={{uri: image.endCallButton}} />
-          <Text style={{textAlign: 'center', marginTop: 5}}>Decline</Text>
+          <Text style={{textAlign: 'center', marginTop: 5}}>
+            {constant.REJECTCALL}
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -160,7 +165,7 @@ export default class CallScreen extends Component {
 
   _renderCallAnsweredView = () => {
     return (
-      <TouchableOpacity onPress={() => this._handleCall('EndCall')}>
+      <TouchableOpacity onPress={() => this._handleCall(constant.REJECTCALL)}>
         <Image style={styles.endCall} source={{uri: image.endCallButton}} />
       </TouchableOpacity>
     );
@@ -168,12 +173,13 @@ export default class CallScreen extends Component {
 
   _handleCall = (action) => {
     switch (action) {
-      case 'AnswerCall':
-        this.setState({showTimer: true}, () => {
+      case constant.ACCEPTCALL:
+        this.setState({stopwatchShow: true, stopwatchStart: true}, () => {
           ReplaceDialer.acceptCall();
         });
         break;
-      case 'EndCall':
+      case constant.REJECTCALL:
+        this.setState({stopwatchStart: false});
         ReplaceDialer.disconnectCall();
         break;
       case constant.ADD:
@@ -211,7 +217,7 @@ export default class CallScreen extends Component {
     }
   };
 
-  _renderControls = (name, imageUri, image1, image2) => {
+  _renderCtrls = (name, imageUri, image1, image2) => {
     return (
       <CustomButton
         name={name}
@@ -227,9 +233,10 @@ export default class CallScreen extends Component {
     const {
       speaker,
       mute,
-      showTimer,
-      startTimer,
-      eventType,
+      stopwatchStart,
+      stopwatchShow,
+
+      event,
       record,
       phoneNumber,
       keypad,
@@ -251,31 +258,41 @@ export default class CallScreen extends Component {
             </Text>
 
             {/* Show timer when user pick up call */}
-            {showTimer ? <CallTimer startTimer={startTimer} /> : null}
+
+            {stopwatchShow && (
+              <CallTimer
+                stopwatchStart={stopwatchStart}
+                stopwatchShow={stopwatchShow}
+              />
+            )}
 
             <Text>
-              {eventType == 'Disconnected' || eventType == 'Missed'
-                ? eventType
-                : ''}
+              {event == 'Disconnected' || event == 'Missed' ? event : ''}
             </Text>
           </View>
 
           <View style={styles.subContainer2}>
-            <View style={styles.row}>
-              {this._renderControls(constant.ADD, conference, img[0], img[1])}
-              {this._renderControls(constant.HOLD, hold, img[2], img[3])}
-              {this._renderControls(constant.REC, record, img[4], img[5])}
-              {this._renderControls(constant.BLUT, blutName, img[6], img[7])}
-            </View>
-            <View style={styles.row}>
-              {this._renderControls(constant.SPEAKER, speaker, img[8], img[9])}
-              {this._renderControls(constant.MUTE, mute, img[10], img[11])}
-              {this._renderControls(constant.KEYPAD, keypad, img[12], img[13])}
-            </View>
+            {callType != 'Incoming' || event == 'Offhook' ? (
+              <>
+                <View style={styles.row}>
+                  {this._renderCtrls(constant.ADD, conference, img[0], img[1])}
+                  {this._renderCtrls(constant.HOLD, hold, img[2], img[3])}
+                  {this._renderCtrls(constant.REC, record, img[4], img[5])}
+                  {this._renderCtrls(constant.BLUT, blutName, img[6], img[7])}
+                </View>
+                <View style={styles.row}>
+                  {this._renderCtrls(constant.SPEAKER, speaker, img[8], img[9])}
+                  {this._renderCtrls(constant.MUTE, mute, img[10], img[11])}
+                  {this._renderCtrls(constant.KEYPAD, keypad, img[12], img[13])}
+                </View>
+              </>
+            ) : null}
           </View>
 
           <View style={styles.subContainer3}>
-            {eventType === 'Incoming' || eventType === 'Missed'
+            {callType == 'Incoming' && event == 'Incoming'
+              ? this._renderIncomingView()
+              : event == 'Missed'
               ? this._renderIncomingView()
               : this._renderCallAnsweredView()}
           </View>
@@ -302,7 +319,7 @@ const styles = StyleSheet.create({
   },
   calling: {
     textAlign: 'center',
-    fontSize: 22,
+    fontSize: responsiveFonts(16),
     color: 'gray',
   },
   row: {
@@ -321,7 +338,6 @@ const styles = StyleSheet.create({
   },
   subContainer1: {
     flex: 2,
-    justifyContent: 'center',
     alignItems: 'center',
   },
   subContainer2: {
