@@ -289,13 +289,13 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         if (permissionRecord == PackageManager.PERMISSION_GRANTED && permissionStorage == PackageManager.PERMISSION_GRANTED) {
             if (!RecordService.getInstance().isRecording) {
                 RecordService.getInstance().startRecording();
-                callback.invoke("success");
+                callback.invoke(true);
             } else {
                 RecordService.getInstance().stopRecording();
-                callback.invoke("failed");
+                callback.invoke(false);
             }
         } else {
-            callback.invoke("failed");
+            callback.invoke(false);
         }
     }
 

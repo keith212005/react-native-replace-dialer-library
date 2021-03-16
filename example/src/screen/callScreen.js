@@ -201,15 +201,9 @@ export default class CallScreen extends Component {
         });
         break;
       case constant.REC:
-        ReplaceDialer.recordCall((result) => {
-          console.log('record status = ', result);
-          if (result == 'success') {
-            this.setState({record: true});
-          } else {
-            this.setState({record: false});
-          }
+        ReplaceDialer.recordCall((isRecording) => {
+          this.setState({record: isRecording});
         });
-
         break;
       case constant.BLUT:
         ReplaceDialer.toggleBluetooth();
