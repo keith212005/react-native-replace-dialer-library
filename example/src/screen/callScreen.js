@@ -197,7 +197,6 @@ export default class CallScreen extends Component {
         break;
       case constant.HOLD:
         ReplaceDialer.holdCall((isOnHold) => {
-          console.log('holding...', isOnHold);
           this.setState({hold: isOnHold});
         });
         break;
@@ -213,19 +212,16 @@ export default class CallScreen extends Component {
 
         break;
       case constant.BLUT:
-        ReplaceDialer.toggleBluetoothOnOff();
+        ReplaceDialer.toggleBluetooth();
         break;
       case constant.SPEAKER:
-        const {speaker} = this.state;
-        this.setState({speaker: !speaker}, () => {
-          ReplaceDialer.toggleSpeakerOnOff();
+        ReplaceDialer.toggleSpeaker((isSpeakerOn) => {
+          this.setState({speaker: isSpeakerOn});
         });
-
         break;
       case constant.MUTE:
-        const {mute} = this.state;
-        this.setState({mute: !mute}, () => {
-          ReplaceDialer.toggleMicOnOff();
+        ReplaceDialer.toggleMute((isMicMute) => {
+          this.setState({mute: isMicMute});
         });
         break;
       case constant.KEYPAD:

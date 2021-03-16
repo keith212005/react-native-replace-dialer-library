@@ -150,13 +150,27 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     }
 
     @ReactMethod
-    public void toggleSpeakerOnOff() {
-        audioManager.setSpeakerphoneOn(audioManager.isSpeakerphoneOn() ? false : true);
+    public void toggleSpeaker(Callback callback) {
+        if(audioManager.isSpeakerphoneOn())
+        {
+            audioManager.setSpeakerphoneOn(false);
+            callback.invoke(false);
+        } else {
+            audioManager.setSpeakerphoneOn(true);
+            callback.invoke(true);
+        }
     }
 
     @ReactMethod
-    public void toggleMicOnOff() {
-        audioManager.setMicrophoneMute(audioManager.isMicrophoneMute() ? false : true);
+    public void toggleMute(Callback callback) {
+        if(audioManager.isMicrophoneMute()){
+            audioManager.setMicrophoneMute(false);
+            callback.invoke(false);
+        } else {
+            audioManager.setMicrophoneMute(true);
+            callback.invoke(true);
+
+        }
     }
 
     @ReactMethod
@@ -172,7 +186,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
-    public void toggleBluetoothOnOff() {
+    public void toggleBluetooth() {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
             // Device does not support Bluetooth
