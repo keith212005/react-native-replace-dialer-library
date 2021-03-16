@@ -10,6 +10,15 @@ import {
   StatusBar,
 } from 'react-native';
 
+import {
+  check,
+  PERMISSIONS,
+  RESULTS,
+  checkMultiple,
+  requestMultiple,
+  request,
+} from 'react-native-permissions';
+
 import {CustomButton, CallTimer} from '@components';
 import {image, constant} from '@constants';
 import {responsiveFonts, responsiveHeight, responsiveWidth} from '@resources';
@@ -26,8 +35,8 @@ const img = [
   image.hold_b,
   image.record_b,
   image.record_g,
-  image.bluetooth_g,
   image.bluetooth_b,
+  image.bluetooth_g,
   image.speaker_b,
   image.speaker_g,
   image.mic_g,
@@ -92,7 +101,7 @@ export default class CallScreen extends Component {
           this.setState({connected: false, stopwatchStart: false}, () => {
             setTimeout(() => {
               ReplaceDialer.closeCurrentView();
-            }, 3000);
+            }, 2500);
           });
         } else if (event === 'Connected') {
           // Do something call got connected
@@ -179,8 +188,9 @@ export default class CallScreen extends Component {
         });
         break;
       case constant.REJECTCALL:
-        this.setState({stopwatchStart: false});
-        ReplaceDialer.disconnectCall();
+        this.setState({stopwatchStart: false}, () => {
+          ReplaceDialer.disconnectCall();
+        });
         break;
       case constant.ADD:
         ReplaceDialer.makeConferenceCall();
@@ -192,26 +202,33 @@ export default class CallScreen extends Component {
         });
         break;
       case constant.REC:
-        const {record} = this.state;
-        this.setState({record: !record}, () => {
-          ReplaceDialer.startRecord(this.state.record);
+        ReplaceDialer.recordCall((result) => {
+          console.log('record status = ', result);
+          if (result == 'success') {
+            this.setState({record: true});
+          } else {
+            this.setState({record: false});
+          }
         });
+
         break;
       case constant.BLUT:
         ReplaceDialer.toggleBluetoothOnOff();
         break;
       case constant.SPEAKER:
         const {speaker} = this.state;
-        this.setState({speaker: !speaker});
-        ReplaceDialer.toggleSpeakerOnOff();
+        this.setState({speaker: !speaker}, () => {
+          ReplaceDialer.toggleSpeakerOnOff();
+        });
+
         break;
       case constant.MUTE:
         const {mute} = this.state;
-        this.setState({mute: !mute});
-        ReplaceDialer.toggleMicOnOff();
+        this.setState({mute: !mute}, () => {
+          ReplaceDialer.toggleMicOnOff();
+        });
         break;
       case constant.KEYPAD:
-        ReplaceDialer.makeConferenceCall();
         break;
       default:
     }
@@ -235,7 +252,6 @@ export default class CallScreen extends Component {
       mute,
       stopwatchStart,
       stopwatchShow,
-
       event,
       record,
       phoneNumber,
@@ -259,12 +275,7 @@ export default class CallScreen extends Component {
 
             {/* Show timer when user pick up call */}
 
-            {stopwatchShow && (
-              <CallTimer
-                stopwatchStart={stopwatchStart}
-                stopwatchShow={stopwatchShow}
-              />
-            )}
+            {stopwatchShow && <CallTimer stopwatchStart={stopwatchStart} />}
 
             <Text>
               {event == 'Disconnected' || event == 'Missed' ? event : ''}
@@ -278,7 +289,7 @@ export default class CallScreen extends Component {
                   {this._renderCtrls(constant.ADD, conference, img[0], img[1])}
                   {this._renderCtrls(constant.HOLD, hold, img[2], img[3])}
                   {this._renderCtrls(constant.REC, record, img[4], img[5])}
-                  {this._renderCtrls(constant.BLUT, blutName, img[6], img[7])}
+                  {this._renderCtrls(blutName, blutName, img[6], img[7])}
                 </View>
                 <View style={styles.row}>
                   {this._renderCtrls(constant.SPEAKER, speaker, img[8], img[9])}

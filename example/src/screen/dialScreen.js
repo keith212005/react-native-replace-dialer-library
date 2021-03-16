@@ -20,16 +20,31 @@ import {
   RESULTS,
   checkMultiple,
   requestMultiple,
+  request,
 } from 'react-native-permissions';
 import ReplaceDialer from 'react-native-replace-dialer';
 
 import {responsiveWidth, responsiveHeight, responsiveFonts} from '@resources';
 
+const permissions = [
+  PERMISSIONS.ANDROID.CALL_PHONE,
+  PERMISSIONS.ANDROID.READ_CALL_LOG,
+  PERMISSIONS.ANDROID.RECORD_AUDIO,
+  PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE,
+];
+
 export default class DialScreen extends Component<{}> {
+  constructor(props) {
+    super(props);
+  }
   state = {
     phoneNumber: '9409005997',
     speakerStatus: false,
+    alertShow: false,
+    alertMessage: '',
+    shouldGoToSetting: false,
   };
+
   componentDidMount() {
     ReplaceDialer.isDefaultDialer((data) => {
       console.log('isDefaultDialer>>', data);
@@ -45,44 +60,52 @@ export default class DialScreen extends Component<{}> {
             console.log('Default dialer NOT set');
           }
         });
-        this.checkPermissions().then((statuses) => {});
       }
     });
+
+    // this.checkPermissions();
   }
 
-  requestPermission() {
-    return new Promise(function (resolve, reject) {
-      requestMultiple([
-        PERMISSIONS.ANDROID.CALL_PHONE,
-        PERMISSIONS.ANDROID.READ_CALL_LOG,
-        PERMISSIONS.ANDROID.RECORD_AUDIO,
-        PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      ]).then((statuses) => {
-        resolve(statuses);
-      });
+  requestMultiplePermissions() {
+    requestMultiple(permissions).then((statuses) => {
+      resolve(statuses);
     });
   }
 
   checkPermissions() {
-    return new Promise(function (resolve, reject) {
-      checkMultiple([
-        PERMISSIONS.ANDROID.CALL_PHONE,
-        PERMISSIONS.ANDROID.READ_CALL_LOG,
-        PERMISSIONS.ANDROID.RECORD_AUDIO,
-        PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      ]).then((statuses) => {
-        resolve(statuses);
-      });
+    checkMultiple(permissions).then((statuses) => {
+      var size = Object.keys(statuses).length;
+      console.log(statuses);
+      console.log(size);
+      for (var i = 0; i < permissions.length; i++) {
+        switch (statuses[permissions[i]]) {
+          case RESULTS.UNAVAILABLE:
+            console.log('This feature is not available on this device.');
+            break;
+          case RESULTS.DENIED:
+            console.log(
+              'The permission has not been requested / is denied but requestable',
+            );
+            this.requestMultiplePermissions();
+            break;
+          case RESULTS.LIMITED:
+            console.log('The permission is limited: some actions are possible');
+            break;
+          case RESULTS.GRANTED:
+            console.log('The permission is granted');
+            break;
+          case RESULTS.BLOCKED:
+            break;
+        }
+      }
     });
   }
 
   onPressCall() {
     const {phoneNumber} = this.state;
     const {navigate} = this.props.navigation;
-    this.checkPermissions().then((statuses) => {
-      console.log('statussesssss>>', statuses);
-
-      switch (statuses['android.permission.CALL_PHONE']) {
+    request(permissions[0]).then((result) => {
+      switch (result) {
         case RESULTS.GRANTED:
           {
             ReplaceDialer.callPhoneNumber(phoneNumber, (message) => {
@@ -92,8 +115,8 @@ export default class DialScreen extends Component<{}> {
           break;
         case RESULTS.BLOCKED:
           Alert.alert(
-            'Error',
-            'Please allow this app the call permission in settings.',
+            'Call Permissions',
+            'Allow this app to make phone calls. Please allow Phone permission in the settings.',
             [
               {
                 text: 'OK',

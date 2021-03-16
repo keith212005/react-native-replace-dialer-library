@@ -16,6 +16,7 @@ public class CallService extends InCallService {
     @Override
     public void onCallAdded(Call call) {
         super.onCallAdded(call);
+
         new OngoingCall().setCall(call);
         ReplaceDialerModule replaceDialerModule = new ReplaceDialerModule();
         replaceDialerModule.openCallActivity(getApplicationContext(),call);

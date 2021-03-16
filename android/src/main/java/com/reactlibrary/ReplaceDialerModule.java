@@ -1,11 +1,15 @@
 package com.reactlibrary;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.role.RoleManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -18,6 +22,7 @@ import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Callback;
@@ -31,7 +36,7 @@ import com.facebook.react.modules.core.PermissionListener;
 import java.util.Set;
 
 
-public class ReplaceDialerModule extends ReactContextBaseJavaModule implements PermissionListener, LifecycleEventListener,ActivityEventListener {
+public class ReplaceDialerModule extends ReactContextBaseJavaModule implements PermissionListener, LifecycleEventListener,ActivityEventListener  {
 
     private ReactApplicationContext mContext;
 
@@ -49,9 +54,15 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
         this.mContext.addLifecycleEventListener(this);
+        this.mContext.addActivityEventListener(this);
+
+        //register broadcast receiver for bluetooth
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        mContext.registerReceiver(mReceiver, filter);
     }
-
-
 
     @Override
     public String getName() {
@@ -130,22 +141,12 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     @ReactMethod
     public void callPhoneNumber(String phoneNumber, Callback myCallback) {
-        PermissionAwareActivity activity = (PermissionAwareActivity) getCurrentActivity();
-        if (activity == null) {
-            // Handle null case
-        }
-        Toast.makeText(mContext, "" + phoneNumber, Toast.LENGTH_SHORT).show();
         Uri uri = Uri.parse("tel:" + phoneNumber.trim());
         Intent intent = new Intent(Intent.ACTION_CALL, uri);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("phone_number", phoneNumber);
         this.mContext.startActivity(intent);
         myCallback.invoke(phoneNumber);
-    }
-
-    @Override
-    public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        return false;
     }
 
     @ReactMethod
@@ -173,13 +174,42 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @ReactMethod
     public void toggleBluetoothOnOff() {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-        if (pairedDevices.size() > 0) {
-            for (BluetoothDevice device : pairedDevices) {
-                String name = device.getName();
-            }
+        if (mBluetoothAdapter == null) {
+            // Device does not support Bluetooth
+            Log.d("ReplaceDialer","Device not supported for bluetooth");
+
+        } else if (!mBluetoothAdapter.isEnabled()) {
+            // Bluetooth is not enabled :)
+            Log.d("ReplaceDialer","Bluetooth is not enabled");
+            final Intent intent = new Intent(Intent.ACTION_MAIN, null);
+            intent.addCategory(Intent.CATEGORY_LAUNCHER);
+            ComponentName cn = new ComponentName("com.android.settings",
+                    "com.android.settings.bluetooth.BluetoothSettings");
+            intent.setComponent(cn);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity( intent);
+
+        } else {
+            // Bluetooth is enabled
+            Log.d("ReplaceDialer","Bluetooth is enabled");
         }
     }
+
+    //The BroadcastReceiver that listens for bluetooth broadcasts
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
+                //Do something if connected
+                Log.d("ReplaceDialer","Bluetooth connected........");
+            }
+            else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
+                //Do something if disconnected
+                Log.d("ReplaceDialer","Bluetooth disconnected........");
+            }
+        }
+    };
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
@@ -196,8 +226,11 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void closeCurrentView() {
-        if(RecordService.getInstance().isRecording) {
-            RecordService.getInstance().stopRecording();
+        int permissionRecord = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.RECORD_AUDIO);
+        if (permissionRecord == PackageManager.PERMISSION_GRANTED) {
+            if (RecordService.getInstance().isRecording == true) {
+                RecordService.getInstance().stopRecording();
+            }
         }
         mContext.getCurrentActivity().finishAndRemoveTask();
     }
@@ -230,21 +263,23 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     }
 
     @ReactMethod
-    public void startRecord(boolean status) {
-        int PERMISSION_ALL = 1;
-        String[] PERMISSIONS = {
-                android.Manifest.permission.RECORD_AUDIO,
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-        };
+    public void recordCall(Callback callback) {
+        int ALL_PERMISSIONS = 101;
+        final String[] permissions = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        ActivityCompat.requestPermissions(getCurrentActivity(), permissions, ALL_PERMISSIONS);
 
-        if (!hasPermissions(mContext, PERMISSIONS)) {
-            ActivityCompat.requestPermissions(getCurrentActivity(), PERMISSIONS, PERMISSION_ALL);
-        }  else {
-            if (status == true) {
+        int permissionRecord = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.RECORD_AUDIO);
+        int permissionStorage = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (permissionRecord == PackageManager.PERMISSION_GRANTED && permissionStorage == PackageManager.PERMISSION_GRANTED) {
+            if (!RecordService.getInstance().isRecording) {
                 RecordService.getInstance().startRecording();
+                callback.invoke("success");
             } else {
                 RecordService.getInstance().stopRecording();
+                callback.invoke("failed");
             }
+        } else {
+            callback.invoke("failed");
         }
     }
 
@@ -262,28 +297,34 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     @Override
     public void onHostResume() {
-        Log.d("ReplaceDialerModule","onHostResume");
+//        Log.d("ReplaceDialerModule","onHostResume");
     }
 
     @Override
     public void onHostPause() {
-        Log.d("ReplaceDialerModule","onHostPause");
+//        Log.d("ReplaceDialerModule","onHostPause");
     }
 
     @Override
     public void onHostDestroy() {
-        Log.d("ReplaceDialerModule","onHostDestroy");
+//        Log.d("ReplaceDialerModule","onHostDestroy");
     }
+
 
     @Override
     public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
         Log.d("c","onActivityResult called ... "+ requestCode + resultCode );
-
     }
 
     @Override
     public void onNewIntent(Intent intent) {
 
+    }
+
+    @Override
+    public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        Log.d("Permissions>>",""+requestCode);
+        return true;
     }
 }
 
