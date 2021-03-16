@@ -253,12 +253,14 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
-    public void holdCall(boolean status) {
-        Log.d("ReplaceDialerModule", "hold status = " + status);
-        if (status) {
-            OngoingCall.hold();
-        } else {
+    public void holdCall(Callback callback) {
+        int state = OngoingCall.getCallState();
+        if (state == Call.STATE_HOLDING) {
             OngoingCall.unhold();
+            callback.invoke(false);
+        } else {
+            OngoingCall.hold();
+            callback.invoke(true);
         }
     }
 

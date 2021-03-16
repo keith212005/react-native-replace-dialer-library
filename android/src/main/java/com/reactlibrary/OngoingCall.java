@@ -47,6 +47,11 @@ public class OngoingCall implements InCallPhoneListener{
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
+    public static int getCallState(){
+        return call.getState();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
     public void answer() {
         assert call != null;
         if(call != null) {
@@ -105,6 +110,8 @@ public class OngoingCall implements InCallPhoneListener{
 //        return call == null ? null : call.getTelecommCallId();
         return null;
     }
+
+
 
     @Override
     public void setPhone(Phone phone) {

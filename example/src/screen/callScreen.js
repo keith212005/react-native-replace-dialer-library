@@ -31,8 +31,8 @@ import {Stopwatch, Timer} from 'react-native-stopwatch-timer';
 const img = [
   image.add_b,
   image.add_g,
-  image.hold_g,
   image.hold_b,
+  image.hold_g,
   image.record_b,
   image.record_g,
   image.bluetooth_b,
@@ -196,9 +196,9 @@ export default class CallScreen extends Component {
         ReplaceDialer.makeConferenceCall();
         break;
       case constant.HOLD:
-        const {hold} = this.state;
-        this.setState({hold: !hold}, () => {
-          ReplaceDialer.holdCall(this.state.hold);
+        ReplaceDialer.holdCall((isOnHold) => {
+          console.log('holding...', isOnHold);
+          this.setState({hold: isOnHold});
         });
         break;
       case constant.REC:
