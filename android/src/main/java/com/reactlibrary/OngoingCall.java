@@ -1,6 +1,7 @@
 package com.reactlibrary;
 
 import android.app.Application;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.telecom.Call;
@@ -31,6 +32,24 @@ public class OngoingCall implements InCallPhoneListener{
             state.onNext(newState);
         }
     };
+
+
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    public static String getPhoneNumber() {
+        String phoneNumber = null;
+        if (call != null) {
+            Uri uri = call.getDetails().getHandle();
+            String number = uri.toString();
+            if (number.contains("%2B")) {
+                number = number.replace("%2B", "+");
+            }
+            number = number.replace("tel:", "");
+            phoneNumber = number;
+        }
+        return phoneNumber;
+
+    }
 
 
     @RequiresApi(api = Build.VERSION_CODES.R)
@@ -81,7 +100,6 @@ public class OngoingCall implements InCallPhoneListener{
         if(call != null) {
             call.unhold();
         }
-
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
@@ -110,8 +128,6 @@ public class OngoingCall implements InCallPhoneListener{
 //        return call == null ? null : call.getTelecommCallId();
         return null;
     }
-
-
 
     @Override
     public void setPhone(Phone phone) {

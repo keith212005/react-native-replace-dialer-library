@@ -233,6 +233,19 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
+    public static void getPhoneNumber(Callback callback) {
+        callback.invoke(OngoingCall.getPhoneNumber());
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    @ReactMethod
+    public static void getCallState(Callback callback) {
+        Integer state = OngoingCall.getCallState();
+        callback.invoke(state);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    @ReactMethod
     public void disconnectCall() {
         new OngoingCall().hangup();
     }

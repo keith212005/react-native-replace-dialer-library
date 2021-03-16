@@ -198,6 +198,12 @@ export default class CallScreen extends Component {
       case constant.HOLD:
         ReplaceDialer.holdCall((isOnHold) => {
           this.setState({hold: isOnHold});
+          ReplaceDialer.getCallState((state) => {
+            console.log('state>>>>>>>>>>', state);
+          });
+          ReplaceDialer.getPhoneNumber((number) => {
+            console.log(number);
+          });
         });
         break;
       case constant.REC:
