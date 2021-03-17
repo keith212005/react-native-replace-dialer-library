@@ -33,8 +33,6 @@ public class OngoingCall implements InCallPhoneListener{
         }
     };
 
-
-
     @RequiresApi(api = Build.VERSION_CODES.R)
     public static String getPhoneNumber() {
         String phoneNumber = null;
@@ -48,7 +46,6 @@ public class OngoingCall implements InCallPhoneListener{
             phoneNumber = number;
         }
         return phoneNumber;
-
     }
 
 

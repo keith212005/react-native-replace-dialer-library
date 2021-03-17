@@ -35,12 +35,12 @@ const img = [
   image.hold_g,
   image.record_b,
   image.record_g,
-  image.bluetooth_b,
   image.bluetooth_g,
+  image.bluetooth_b,
   image.speaker_b,
   image.speaker_g,
-  image.mic_g,
   image.mic_b,
+  image.mic_g,
   image.keypad_b,
   image.keypad_g,
 ];
@@ -198,12 +198,6 @@ export default class CallScreen extends Component {
       case constant.HOLD:
         ReplaceDialer.holdCall((isOnHold) => {
           this.setState({hold: isOnHold});
-          ReplaceDialer.getCallState((state) => {
-            console.log('state>>>>>>>>>>', state);
-          });
-          ReplaceDialer.getPhoneNumber((number) => {
-            console.log(number);
-          });
         });
         break;
       case constant.REC:

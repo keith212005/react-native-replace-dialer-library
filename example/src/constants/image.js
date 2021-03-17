@@ -1,8 +1,8 @@
 export const image = {
   keypad_b: 'keypad_b',
   keypad_g: 'keypad_g',
-  mic_b: 'microphone_b',
-  mic_g: 'microphone_g',
+  mic_b: 'mute_b',
+  mic_g: 'mute_g',
   add_b: 'add_b',
   add_g: 'add_g',
   bluetooth_b: 'bluetooth_b',

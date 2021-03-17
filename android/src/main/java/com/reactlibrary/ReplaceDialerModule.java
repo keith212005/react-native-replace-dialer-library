@@ -161,15 +161,20 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void toggleMute(Callback callback) {
-        if(audioManager.isMicrophoneMute()){
-            audioManager.setMicrophoneMute(false);
-            callback.invoke(false);
+        int state = OngoingCall.getCallState();
+        if(state == Call.STATE_ACTIVE){
+            if(audioManager.isMicrophoneMute()){
+                audioManager.setMicrophoneMute(false);
+                callback.invoke(false);
+            } else {
+                audioManager.setMicrophoneMute(true);
+                callback.invoke(true);
+            }
         } else {
-            audioManager.setMicrophoneMute(true);
-            callback.invoke(true);
-
+            callback.invoke(false);
         }
     }
 
@@ -191,7 +196,6 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         if (mBluetoothAdapter == null) {
             // Device does not support Bluetooth
             Log.d("ReplaceDialer","Device not supported for bluetooth");
-
         } else if (!mBluetoothAdapter.isEnabled()) {
             // Bluetooth is not enabled :)
             Log.d("ReplaceDialer","Bluetooth is not enabled");
@@ -202,7 +206,6 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
             intent.setComponent(cn);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mContext.startActivity( intent);
-
         } else {
             // Bluetooth is enabled
             Log.d("ReplaceDialer","Bluetooth is enabled");
@@ -285,9 +288,11 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         if (state == Call.STATE_HOLDING) {
             OngoingCall.unhold();
             callback.invoke(false);
-        } else {
+        } else if(state == Call.STATE_ACTIVE){
             OngoingCall.hold();
             callback.invoke(true);
+        } else {
+            callback.invoke(false);
         }
     }
 
