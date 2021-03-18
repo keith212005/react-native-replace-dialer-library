@@ -68,8 +68,6 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
         // the string in AppRegistry.registerComponent() in index.js
         Bundle initialProps = new Bundle();
         initialProps.putString("initialScreenName", "CallScreen");
-        initialProps.putString("outgoingNumber", getIntent().getStringExtra("phoneNumber"));
-        initialProps.putString("callType", getIntent().getStringExtra("callType"));
         mReactRootView.startReactApplication(mReactInstanceManager, "example", initialProps);
         setContentView(mReactRootView);
 

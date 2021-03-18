@@ -1,20 +1,20 @@
 package com.reactlibrary;
 
-import android.app.Application;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.telecom.Call;
-import android.telecom.Conference;
 import android.telecom.VideoProfile;
-import android.telephony.TelephonyManager;
+import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
-
-
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import io.reactivex.subjects.BehaviorSubject;
 
@@ -22,12 +22,25 @@ public class OngoingCall implements InCallPhoneListener{
 
     public static BehaviorSubject<Integer> state = BehaviorSubject.create();
     private static Call call;
+    private Call anotherCall;
+    private List<Call> callList = new ArrayList<Call>();
     private Phone mPhone;
+    private static OngoingCall mInstance;
+
+    private OngoingCall(){}
+
+    public static OngoingCall getInstance() {
+        if (mInstance == null) {
+            mInstance = new OngoingCall();
+        }
+        return mInstance;
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     private Object callback = new Call.Callback() {
         @Override
         public void onStateChanged(Call call, int newState) {
+            Log.d("OngoingCall","new call state = " + newState);
             super.onStateChanged(call, newState);
             state.onNext(newState);
         }
@@ -48,6 +61,73 @@ public class OngoingCall implements InCallPhoneListener{
         return phoneNumber;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    public static String getCallId() {
+
+        Bundle bundle = call.getDetails().getExtras();
+        Log.d("Bundle>>","capablities = "+call.getDetails().getCallCapabilities());
+
+        if (bundle != null) {
+            Set<String> keys = bundle.keySet();
+            Iterator<String> it = keys.iterator();
+            Log.d("Bundle>>","Dumping Intent start");
+            while (it.hasNext()) {
+                String key = it.next();
+                Log.d("Bundle>>","[" + key + " = " + bundle.get(key)+"]");
+            }
+            Log.d("Bundle>>","Dumping Intent end");
+        }
+
+        Bundle bundle2 = call.getDetails().getIntentExtras();
+
+        if (bundle2 != null) {
+            Set<String> keys = bundle2.keySet();
+            Iterator<String> it = keys.iterator();
+            Log.d("Bundle>>","Dumping Intent start");
+            while (it.hasNext()) {
+                String key = it.next();
+                Log.d("Bundle2>>","[" + key + " = " + bundle2.get(key)+"]");
+            }
+            Log.d("Bundle2>>","Dumping Intent end");
+        };
+        return "";
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void makePreviousCallReadyForConference() {
+        if(call!=null){
+            call.getParent();
+            Log.d("Bundle>>","getConferencatble calls =  "+call.getConferenceableCalls().size());
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    public void merge(String callId) {
+//        if (mPhone != null) {
+//            android.telecom.Call call = getTelecommCallById(callId);
+//            List<android.telecom.Call> conferenceable = call.getConferenceableCalls();
+//            if (!conferenceable.isEmpty()) {
+//                call.conference(conferenceable.get(0));
+//            } else {
+//                int capabilities = call.getDetails().getCallCapabilities();
+//                if (0 != (capabilities & PhoneCapabilities.MERGE_CONFERENCE)) {
+//                    call.mergeConference();
+//                }
+//            }
+//        } else {
+//            Log.e(this, "error merge, mPhone is null.");
+//        }
+    }
+
+//    private android.telecom.Call getTelecommCallById(String callId) {
+//        final Call call = CallList.getInstance().getCallById(callId);
+//        return call == null ? null : call.getTelecommCall();
+//    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    public static void addCallToConference() {
+
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     public final void setCall(@Nullable Call value) {
@@ -63,7 +143,7 @@ public class OngoingCall implements InCallPhoneListener{
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
-    public static int getCallState(){
+    public int getCallState(){
         return call.getState();
     }
 
@@ -97,33 +177,6 @@ public class OngoingCall implements InCallPhoneListener{
         if(call != null) {
             call.unhold();
         }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.R)
-    public static void makeConferenceCall(){
-        assert call != null;
-        Log.d("conferencecalls",""+call.getDetails());
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.R)
-    void merge(String callId) {
-        if ( mPhone != null) {
-            Call call = getTelecommCallById(callId);
-            List<android.telecom.Call> conferenceable = call.getConferenceableCalls();
-            if (!conferenceable.isEmpty()) {
-                call.conference(conferenceable.get(0));
-            } else {
-                call.mergeConference();
-            }
-        } else {
-            Log.e("OngoingCall", "error merge, mPhone is null.");
-        }
-    }
-
-    private Call getTelecommCallById(String callId) {
-//        final Call call = CallList.getInstance().getCallById(callId);
-//        return call == null ? null : call.getTelecommCallId();
-        return null;
     }
 
     @Override

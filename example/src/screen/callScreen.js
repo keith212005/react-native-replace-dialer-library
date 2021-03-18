@@ -43,23 +43,26 @@ const img = [
   image.mic_g,
   image.keypad_b,
   image.keypad_g,
+  image.merge_b,
+  image.merge_g,
 ];
 
 export default class CallScreen extends Component {
   constructor(props) {
     super(props);
-    const {outGoingNumber, callType} = this.props.route.params;
+
     console.log('All Params = ', this.props.route.params);
     this.startCallListener();
     this.state = {
       connected: false,
       event: '',
-      callType: callType,
+      callType: '',
       stopwatchShow: false,
       stopwatchStart: true,
-      phoneNumber: outGoingNumber ? outGoingNumber : '',
+      phoneNumber: '',
       blutName: constant.BLUT,
       speaker: false,
+      merge: false,
       hold: false,
       mute: false,
       record: false,
@@ -73,8 +76,13 @@ export default class CallScreen extends Component {
   }
 
   componentDidMount() {
-    ReplaceDialer.getBluetoothName((name) => {
-      this.setState({blutName: name});
+    ReplaceDialer.getCallDetails((callType, bluetoothName, phoneNumber) => {
+      console.log('calldetails>>>', callType, bluetoothName, phoneNumber);
+      this.setState({
+        callType: callType,
+        blutName: bluetoothName,
+        phoneNumber: phoneNumber,
+      });
     });
   }
 
@@ -101,7 +109,7 @@ export default class CallScreen extends Component {
           this.setState({connected: false, stopwatchStart: false}, () => {
             setTimeout(() => {
               ReplaceDialer.closeCurrentView();
-            }, 2500);
+            }, 1000);
           });
         } else if (event === 'Connected') {
           // Do something call got connected
@@ -193,7 +201,12 @@ export default class CallScreen extends Component {
         });
         break;
       case constant.ADD:
-        ReplaceDialer.makeConferenceCall();
+        ReplaceDialer.makeConferenceCall((time) => {
+          console.log('miliseconds>>>>', time);
+        });
+        break;
+      case constant.MERGE:
+        ReplaceDialer.mergeCall(() => {});
         break;
       case constant.HOLD:
         ReplaceDialer.holdCall((isOnHold) => {
@@ -250,6 +263,7 @@ export default class CallScreen extends Component {
       conference,
       callType,
       blutName,
+      merge,
     } = this.state;
 
     return (
@@ -285,6 +299,7 @@ export default class CallScreen extends Component {
                   {this._renderCtrls(constant.SPEAKER, speaker, img[8], img[9])}
                   {this._renderCtrls(constant.MUTE, mute, img[10], img[11])}
                   {this._renderCtrls(constant.KEYPAD, keypad, img[12], img[13])}
+                  {this._renderCtrls(constant.MERGE, merge, img[14], img[15])}
                 </View>
               </>
             ) : null}

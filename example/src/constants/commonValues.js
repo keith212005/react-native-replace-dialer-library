@@ -1,5 +1,6 @@
 export const constant = {
   ADD: 'Add',
+  MERGE: 'Merge',
   HOLD: 'Hold',
   REC: 'Record',
   BLUT: 'Bluetooth',

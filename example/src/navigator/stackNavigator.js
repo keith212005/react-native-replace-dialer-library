@@ -43,10 +43,7 @@ export default class AppContainer extends React.Component {
               animationEnabled: false,
             }}>
             {this._addScreen('DialScreen')}
-            {this._addScreen('CallScreen', false, null, {
-              outGoingNumber: this.props.outGoingNumber,
-              callType: this.props.callType,
-            })}
+            {this._addScreen('CallScreen', false, null, {})}
           </Stack.Navigator>
         </NavigationContainer>
       </>

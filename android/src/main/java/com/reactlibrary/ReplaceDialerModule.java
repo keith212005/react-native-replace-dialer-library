@@ -18,7 +18,6 @@ import android.os.Bundle;
 import android.telecom.Call;
 import android.telecom.TelecomManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
@@ -30,13 +29,18 @@ import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.modules.core.PermissionAwareActivity;
 import com.facebook.react.modules.core.PermissionListener;
+import com.google.gson.Gson;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.Set;
 
 
-public class ReplaceDialerModule extends ReactContextBaseJavaModule implements PermissionListener, LifecycleEventListener,ActivityEventListener  {
+public class ReplaceDialerModule extends ReactContextBaseJavaModule implements PermissionListener,
+        LifecycleEventListener, ActivityEventListener {
 
     private ReactApplicationContext mContext;
 
@@ -71,16 +75,9 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     public void openCallActivity(Context applicationContext, Call call) {
-
         try {
-            Intent intent = null;
             Class cls = Class.forName("com.example.CallActivity");
-            Log.d("classname", "" + cls);
-            intent = new Intent(applicationContext, cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            String phoneNumber = getPhoneNumber(call);
-            Log.d("callActivity", "void start class : " + phoneNumber);
-            intent.putExtra("phoneNumber", getPhoneNumber(call));
-            intent.putExtra("callType",getCallType(call));
+            Intent intent = new Intent(applicationContext, cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             applicationContext.startActivity(intent);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -88,30 +85,22 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
-    private String getCallType(Call call) {
-        if(call.getState() == Call.STATE_RINGING){
-            return "Incoming";
-        } else {
-            return "Calling...";
-        }
+    private String getCallType() {
+        int state = OngoingCall.getInstance().getCallState();
+        return state == Call.STATE_RINGING ? "Incoming" : "Calling...";
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private String getPhoneNumber(Call call) {
-        Uri uri = call.getDetails().getHandle();
-        Log.d("callActivity", "void start class : " + uri);
-        String phoneNumber = uri.toString();
-        if (phoneNumber.contains("%2B")) {
-            phoneNumber = phoneNumber.replace("%2B", "+");
-        }
-        phoneNumber = phoneNumber.replace("tel:", "");
-        return phoneNumber;
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    @ReactMethod
+    private void getCallDetails(Callback callback){
+        callback.invoke(getCallType(),getBluetoothName(),getPhoneNumber());
     }
+
 
     // returns true if app set as default dialer else false
     @ReactMethod
     public void isDefaultDialer(Callback myCallback) {
-        if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.R) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) {
             myCallback.invoke(false);
             return;
         }
@@ -124,6 +113,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     }
 
     // set default dialer alert
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     public void setDefaultDialer(Callback myCallback) {
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) {
@@ -151,8 +141,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     @ReactMethod
     public void toggleSpeaker(Callback callback) {
-        if(audioManager.isSpeakerphoneOn())
-        {
+        if (audioManager.isSpeakerphoneOn()) {
             audioManager.setSpeakerphoneOn(false);
             callback.invoke(false);
         } else {
@@ -164,9 +153,9 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void toggleMute(Callback callback) {
-        int state = OngoingCall.getCallState();
-        if(state == Call.STATE_ACTIVE){
-            if(audioManager.isMicrophoneMute()){
+        int state = OngoingCall.getInstance().getCallState();
+        if (state == Call.STATE_ACTIVE) {
+            if (audioManager.isMicrophoneMute()) {
                 audioManager.setMicrophoneMute(false);
                 callback.invoke(false);
             } else {
@@ -179,14 +168,15 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     }
 
     @ReactMethod
-    public void getBluetoothName(Callback callback) {
+    public String getBluetoothName() {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
         if (pairedDevices.size() > 0) {
             for (BluetoothDevice device : pairedDevices) {
-                callback.invoke(device.getName());
+                return device.getName();
             }
         }
+        return null;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
@@ -195,20 +185,20 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
             // Device does not support Bluetooth
-            Log.d("ReplaceDialer","Device not supported for bluetooth");
+            Log.d("ReplaceDialer", "Device not supported for bluetooth");
         } else if (!mBluetoothAdapter.isEnabled()) {
             // Bluetooth is not enabled :)
-            Log.d("ReplaceDialer","Bluetooth is not enabled");
+            Log.d("ReplaceDialer", "Bluetooth is not enabled");
             final Intent intent = new Intent(Intent.ACTION_MAIN, null);
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
             ComponentName cn = new ComponentName("com.android.settings",
                     "com.android.settings.bluetooth.BluetoothSettings");
             intent.setComponent(cn);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity( intent);
+            mContext.startActivity(intent);
         } else {
             // Bluetooth is enabled
-            Log.d("ReplaceDialer","Bluetooth is enabled");
+            Log.d("ReplaceDialer", "Bluetooth is enabled");
         }
     }
 
@@ -219,11 +209,10 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
             String action = intent.getAction();
             if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
                 //Do something if connected
-                Log.d("ReplaceDialer","Bluetooth connected........");
-            }
-            else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
+                Log.d("ReplaceDialer", "Bluetooth connected........");
+            } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
                 //Do something if disconnected
-                Log.d("ReplaceDialer","Bluetooth disconnected........");
+                Log.d("ReplaceDialer", "Bluetooth disconnected........");
             }
         }
     };
@@ -231,26 +220,25 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void acceptCall() {
-        new OngoingCall().answer();
+         OngoingCall.getInstance().answer();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
-    @ReactMethod
-    public static void getPhoneNumber(Callback callback) {
-        callback.invoke(OngoingCall.getPhoneNumber());
+    public String getPhoneNumber() {
+        return OngoingCall.getPhoneNumber();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public static void getCallState(Callback callback) {
-        Integer state = OngoingCall.getCallState();
+        Integer state = OngoingCall.getInstance().getCallState();
         callback.invoke(state);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void disconnectCall() {
-        new OngoingCall().hangup();
+         OngoingCall.getInstance().hangup();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
@@ -267,24 +255,47 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
-    public void makeConferenceCall() {
-        Intent intent = null;
-        Class cls = null;
-        try {
-            cls = Class.forName("com.example.MainActivity");
-            Log.d("classname", "" + cls);
-            intent = new Intent(getReactApplicationContext(), cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            getReactApplicationContext().startActivity(intent);
-            OngoingCall.makeConferenceCall();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+    public void makeConferenceCall(Callback callback) {
+
+        //Tell previous call to enter in conference.
+        OngoingCall.getInstance().makePreviousCallReadyForConference();
+        OngoingCall.getCallId();
+
+//        TelecomManager telecomManager = (TelecomManager) getCurrentActivity().getSystemService(Context.TELECOM_SERVICE);
+//        Uri uri = Uri.parse("tel:" + "1991");
+//        if (ActivityCompat.checkSelfPermission(getReactApplicationContext(), Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+//            // TODO: Consider calling
+//            //    ActivityCompat#requestPermissions
+//            return;
+//        }
+//        Bundle bundle = new Bundle();
+//        telecomManager.placeCall(uri,bundle);
+
+
+
+//        Intent intent = null;
+//        Class cls = null;
+//        try {
+//            cls = Class.forName("com.example.MainActivity");
+//            Log.d("classname", "" + cls);
+//            intent = new Intent(getReactApplicationContext(), cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//            getReactApplicationContext().startActivity(intent);
+//        } catch (ClassNotFoundException e) {
+//            e.printStackTrace();
+//        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    @ReactMethod
+    public void mergeCall(Callback callback) {
+//        OngoingCall.merge();
+        callback.invoke(true);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void holdCall(Callback callback) {
-        int state = OngoingCall.getCallState();
+        int state = OngoingCall.getInstance().getCallState();
         if (state == Call.STATE_HOLDING) {
             OngoingCall.unhold();
             callback.invoke(false);
@@ -328,22 +339,14 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         return true;
     }
 
+    @Override
+    public void onHostResume() { }
 
     @Override
-    public void onHostResume() {
-//        Log.d("ReplaceDialerModule","onHostResume");
-    }
+    public void onHostPause() {}
 
     @Override
-    public void onHostPause() {
-//        Log.d("ReplaceDialerModule","onHostPause");
-    }
-
-    @Override
-    public void onHostDestroy() {
-//        Log.d("ReplaceDialerModule","onHostDestroy");
-    }
-
+    public void onHostDestroy() { }
 
     @Override
     public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
@@ -351,9 +354,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     }
 
     @Override
-    public void onNewIntent(Intent intent) {
-
-    }
+    public void onNewIntent(Intent intent) { }
 
     @Override
     public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {

@@ -14,6 +14,8 @@ export const image = {
   clear_b: 'clear_b',
   record_b: 'record_b',
   record_g: 'record_g',
+  merge_b: 'merge_b',
+  merge_g: 'merge_g',
   endCallButton:
     'https://docs.counterpath.com/docs/CollabUG/Resources/Images/UG/AndroidRetail/icons/end_And.png',
   recieveCallButton:
