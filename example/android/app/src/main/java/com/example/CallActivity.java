@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
@@ -20,18 +19,14 @@ import com.facebook.react.PackageList;
 import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.ReactRootView;
-import com.facebook.react.bridge.Callback;
 import com.facebook.react.common.LifecycleState;
 import com.facebook.react.modules.core.DefaultHardwareBackBtnHandler;
 import com.facebook.react.modules.core.PermissionAwareActivity;
 import com.facebook.react.modules.core.PermissionListener;
 import com.facebook.soloader.SoLoader;
 import com.reactlibrary.BuildConfig;
-import com.reactlibrary.OngoingCall;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 public class CallActivity extends Activity implements DefaultHardwareBackBtnHandler, PermissionAwareActivity {
 

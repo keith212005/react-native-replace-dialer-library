@@ -1,6 +1,5 @@
 package com.reactlibrary;
 
-import android.net.Uri;
 import android.os.Build;
 import android.telecom.Call;
 import android.telecom.InCallService;
@@ -15,7 +14,7 @@ public class CallService extends InCallService {
     @Override
     public void onCallAdded(Call call) {
         super.onCallAdded(call);
-        OngoingCall.getInstance().setCall(call);
+        CallManager.getInstance().setCall(call);
         ReplaceDialerModule replaceDialerModule = new ReplaceDialerModule();
         replaceDialerModule.openCallActivity(getApplicationContext(),call);
     }
@@ -23,11 +22,22 @@ public class CallService extends InCallService {
     @Override
     public void onCallRemoved(Call call) {
         super.onCallRemoved(call);
-        OngoingCall.getInstance().setCall(null);
+        CallManager.getInstance().setCall(null);
     }
 
     @Override
     public void onBringToForeground(boolean showDialpad) {
         super.onBringToForeground(showDialpad);
     }
+
+    @Override
+    public void onCanAddCallChanged(boolean canAddCall) {
+        Log.d("CallService","canAddCall = " + canAddCall);
+        super.onCanAddCallChanged(canAddCall);
+    }
+
+
+
+
+
 }

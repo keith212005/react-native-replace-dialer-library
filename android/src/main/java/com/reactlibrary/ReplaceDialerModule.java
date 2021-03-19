@@ -30,12 +30,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.modules.core.PermissionListener;
-import com.google.gson.Gson;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
 import java.util.Set;
 
 
@@ -86,7 +81,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     private String getCallType() {
-        int state = OngoingCall.getInstance().getCallState();
+        int state = CallManager.getInstance().getCallState();
         return state == Call.STATE_RINGING ? "Incoming" : "Calling...";
     }
 
@@ -153,7 +148,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void toggleMute(Callback callback) {
-        int state = OngoingCall.getInstance().getCallState();
+        int state = CallManager.getInstance().getCallState();
         if (state == Call.STATE_ACTIVE) {
             if (audioManager.isMicrophoneMute()) {
                 audioManager.setMicrophoneMute(false);
@@ -220,25 +215,25 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void acceptCall() {
-         OngoingCall.getInstance().answer();
+         CallManager.getInstance().answer();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     public String getPhoneNumber() {
-        return OngoingCall.getPhoneNumber();
+        return CallManager.getPhoneNumber();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public static void getCallState(Callback callback) {
-        Integer state = OngoingCall.getInstance().getCallState();
+        Integer state = CallManager.getInstance().getCallState();
         callback.invoke(state);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void disconnectCall() {
-         OngoingCall.getInstance().hangup();
+         CallManager.getInstance().hangup();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
@@ -253,23 +248,29 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         mContext.getCurrentActivity().finishAndRemoveTask();
     }
 
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    @ReactMethod
+    public void mergeConferenceCall(Callback callback) {
+        CallManager.getInstance().merge(true);
+        callback.invoke(true);
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void makeConferenceCall(Callback callback) {
 
-        //Tell previous call to enter in conference.
-        OngoingCall.getInstance().makePreviousCallReadyForConference();
-        OngoingCall.getCallId();
+//        OngoingCall.getCallId();
 
-//        TelecomManager telecomManager = (TelecomManager) getCurrentActivity().getSystemService(Context.TELECOM_SERVICE);
-//        Uri uri = Uri.parse("tel:" + "1991");
-//        if (ActivityCompat.checkSelfPermission(getReactApplicationContext(), Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-//            // TODO: Consider calling
-//            //    ActivityCompat#requestPermissions
-//            return;
-//        }
-//        Bundle bundle = new Bundle();
-//        telecomManager.placeCall(uri,bundle);
+        TelecomManager telecomManager = (TelecomManager) getCurrentActivity().getSystemService(Context.TELECOM_SERVICE);
+        Uri uri = Uri.parse("tel:" + "1991");
+        if (ActivityCompat.checkSelfPermission(getReactApplicationContext(), Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            return;
+        }
+        Bundle bundle = new Bundle();
+        telecomManager.placeCall(uri,bundle);
 
 
 
@@ -295,12 +296,12 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void holdCall(Callback callback) {
-        int state = OngoingCall.getInstance().getCallState();
+        int state = CallManager.getInstance().getCallState();
         if (state == Call.STATE_HOLDING) {
-            OngoingCall.unhold();
+            CallManager.unhold();
             callback.invoke(false);
         } else if(state == Call.STATE_ACTIVE){
-            OngoingCall.hold();
+            CallManager.hold();
             callback.invoke(true);
         } else {
             callback.invoke(false);

@@ -206,7 +206,9 @@ export default class CallScreen extends Component {
         });
         break;
       case constant.MERGE:
-        ReplaceDialer.mergeCall(() => {});
+        ReplaceDialer.mergeConferenceCall((value) => {
+          this.setState({merge: value});
+        });
         break;
       case constant.HOLD:
         ReplaceDialer.holdCall((isOnHold) => {
@@ -279,8 +281,9 @@ export default class CallScreen extends Component {
 
             {/* Show timer when user pick up call */}
 
+            {/*
             {stopwatchShow && <CallTimer stopwatchStart={stopwatchStart} />}
-
+            */}
             <Text>
               {event == 'Disconnected' || event == 'Missed' ? event : ''}
             </Text>
