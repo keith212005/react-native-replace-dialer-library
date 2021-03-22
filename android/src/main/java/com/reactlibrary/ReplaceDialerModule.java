@@ -16,6 +16,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.telecom.Call;
+import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
 import android.util.Log;
 
@@ -73,6 +74,8 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         try {
             Class cls = Class.forName("com.example.CallActivity");
             Intent intent = new Intent(applicationContext, cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//            intent.putExtra("phoneNumber",call.getDetails().getHandle().getSchemeSpecificPart());
+//            intent.putExtra("callType",call.getState() == Call.STATE_RINGING ? "Incoming" : "Calling...");
             applicationContext.startActivity(intent);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -80,15 +83,9 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
-    private String getCallType() {
-        int state = CallManager.getInstance().getCallState();
-        return state == Call.STATE_RINGING ? "Incoming" : "Calling...";
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
-    private void getCallDetails(Callback callback){
-        callback.invoke(getCallType(),getBluetoothName(),getPhoneNumber());
+    private void getCallDetails(Callback callback) {
+        callback.invoke(getBluetoothName());
     }
 
 
@@ -124,12 +121,12 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void callPhoneNumber(String phoneNumber, Callback myCallback) {
         Uri uri = Uri.parse("tel:" + phoneNumber.trim());
         Intent intent = new Intent(Intent.ACTION_CALL, uri);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra("phone_number", phoneNumber);
         this.mContext.startActivity(intent);
         myCallback.invoke(phoneNumber);
     }
@@ -219,8 +216,15 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
-    public String getPhoneNumber() {
-        return CallManager.getPhoneNumber();
+    @ReactMethod
+    public void getPhoneNumber(Callback callback) {
+        callback.invoke( CallManager.getPhoneNumber());
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.R)
+    @ReactMethod
+    public void getCallType(Callback callback) {
+        callback.invoke( CallManager.getCallType());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
@@ -259,37 +263,25 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void makeConferenceCall(Callback callback) {
+        TelecomManager telecomManager =
+                (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
+        Bundle extras = new Bundle();
+        Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, "07933667777", null);
 
-//        OngoingCall.getCallId();
-
-        TelecomManager telecomManager = (TelecomManager) getCurrentActivity().getSystemService(Context.TELECOM_SERVICE);
-        Uri uri = Uri.parse("tel:" + "1991");
-        if (ActivityCompat.checkSelfPermission(getReactApplicationContext(), Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
+        Bundle callExtras = new Bundle();
+        callExtras.putString("phoneNumber", "07933667777");
+        extras.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, callExtras);
+        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        Bundle bundle = new Bundle();
-        telecomManager.placeCall(uri,bundle);
-
-
-
-//        Intent intent = null;
-//        Class cls = null;
-//        try {
-//            cls = Class.forName("com.example.MainActivity");
-//            Log.d("classname", "" + cls);
-//            intent = new Intent(getReactApplicationContext(), cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//            getReactApplicationContext().startActivity(intent);
-//        } catch (ClassNotFoundException e) {
-//            e.printStackTrace();
-//        }
+        telecomManager.placeCall(uri, extras);
+        callback.invoke(true);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
     @ReactMethod
     public void mergeCall(Callback callback) {
-//        OngoingCall.merge();
+        CallManager.getInstance().merge(true);
         callback.invoke(true);
     }
 

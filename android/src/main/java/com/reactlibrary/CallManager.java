@@ -1,16 +1,15 @@
 package com.reactlibrary;
 
-import android.net.Uri;
+import android.content.Context;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.telecom.Call;
 import android.telecom.VideoProfile;
 import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -20,11 +19,9 @@ import io.reactivex.subjects.BehaviorSubject;
 @RequiresApi(api = Build.VERSION_CODES.R)
 public class CallManager {
 
-    public static BehaviorSubject<Integer> state = BehaviorSubject.create();
+    public static BehaviorSubject state = BehaviorSubject.create();
 
-//    private static Call call;
     private static Call currentCall;
-    private List<Call> callList = new ArrayList<Call>();
     private static CallManager mInstance;
 
     private CallManager(){}
@@ -45,19 +42,9 @@ public class CallManager {
         }
     };
 
-    public static String getPhoneNumber() {
-        String phoneNumber = null;
-        if (currentCall != null) {
-            Uri uri = currentCall.getDetails().getHandle();
-            String number = uri.toString();
-            if (number.contains("%2B")) {
-                number = number.replace("%2B", "+");
-            }
-            number = number.replace("tel:", "");
-            phoneNumber = number;
-        }
-        return phoneNumber;
-    }
+//    public static String getPhoneNumber() {
+//        return currentCall.getDetails().getHandle().getSchemeSpecificPart();
+//    }
 
     public static String getCallId() {
 
@@ -90,10 +77,22 @@ public class CallManager {
         return "";
     }
 
+    public Call getLastCallInConferenceList(){
+        List<Call> conferenceableCalls = currentCall.getConferenceableCalls();
+        Call lastCall = null;
+        if(conferenceableCalls!=null && !conferenceableCalls.isEmpty()) {
+            lastCall = conferenceableCalls.get(conferenceableCalls.size() - 1);
+            Log.d("CallManager", "Last call number: " + lastCall.getDetails().getHandle().getSchemeSpecificPart());
+        }
+        return lastCall;
+    }
+
     public void merge(boolean z2) {
         boolean z3;
         Call.Details details;
         List<Call> conferenceableCalls = currentCall.getConferenceableCalls();
+        Log.d("CallManager","currentcall1"+currentCall.getDetails().getHandle().getSchemeSpecificPart());
+        Log.d("CallManager","currentcall1"+conferenceableCalls.get(0).getDetails().getHandle().getSchemeSpecificPart());
         if (conferenceableCalls != null && !conferenceableCalls.isEmpty()) {
             Call call = conferenceableCalls.get(0);
             Call parent = call.getParent();
@@ -103,46 +102,33 @@ public class CallManager {
                 } else {
                     z3 = details.can(128);
                 }
-//                if (z3 && parent.getState() == Call.STATE_HOLDING) {
-//                    OngoingCall d2 = this.d.g.d(parent);
-//                    OngoingCall d2 =
-//                    qv1.g("yh0", "%s merge with conference onHold %s", this.b, d2);
-//                    if (d2 != null) {
-//                        d2.p(new i(), 3500);
-//                        d2.W();
-//                        return;
-//                    }
-//                    qv1.u("yh0", "%s merge with holding conference fail, skip", this.b);
-//                }
             }
-//            yh0 d3 = this.d.g.d(call);
-//            qv1.g("yh0", "%s conference with %s", this.b, d3);
-//            if (d3 != null) {
-//                G();
-//                d3.G();
-//            }
-            this.currentCall.conference(call);
-        } else{
+            Log.d("CallManager","currentcall insideed");
+            currentCall.conference(call);
+        } else {
+            Log.d("CallManager","currentcall2"+currentCall.getDetails().getHandle().getSchemeSpecificPart());
             currentCall.mergeConference();
+            Log.d("CallManager","currentcall3"+currentCall.getConferenceableCalls().get(0).getDetails().getHandle().getSchemeSpecificPart());
         }
     }
 
-//    private android.telecom.Call getTelecommCallById(String callId) {
-//        final Call call = CallList.getInstance().getCallById(callId);
-//        return call == null ? null : call.getTelecommCall();
-//    }
-
+    public boolean isCallActive(Context context){
+        AudioManager manager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
+        return manager.getMode() == AudioManager.MODE_IN_CALL;
+    }
 
     public final void setCall(@Nullable Call value) {
-        if (currentCall != null) {
-            currentCall.unregisterCallback((Call.Callback)callback);
-        }
-
         if (value != null) {
-            value.registerCallback((Call.Callback)callback);
             state.onNext(value.getState());
         }
         currentCall = value;
+    }
+
+    public static void updateCall(@org.jetbrains.annotations.Nullable Call call) {
+        currentCall = call;
+        if (call != null) {
+            state.onNext(MappersJava.toGsmCall(call));
+        }
     }
 
     public int getCallState(){
@@ -150,6 +136,10 @@ public class CallManager {
             return currentCall.getState();
         }
         return Call.STATE_NEW;
+    }
+
+    public Call getCurrentCall(){
+        return currentCall;
     }
 
     public void answer() {
@@ -162,7 +152,16 @@ public class CallManager {
     public void hangup() {
         assert currentCall != null;
         if(currentCall != null) {
-            currentCall.disconnect();
+            if(currentCall.getState() == Call.STATE_RINGING) {
+                Log.d("CallManager","rejected number : " +currentCall.getDetails().getHandle().getSchemeSpecificPart());
+                currentCall.reject(false,"");
+            } else {
+                Log.d("CallManager","disconnect number = " + currentCall.getDetails().getHandle().getSchemeSpecificPart());
+                currentCall.disconnect();
+            }
+        }
+        else {
+            Log.d("CallManager","current call is null");
         }
     }
 
@@ -178,5 +177,25 @@ public class CallManager {
         if(currentCall != null) {
             currentCall.unhold();
         }
+    }
+
+    public static String getPhoneNumber(){
+        String phoneNumber = null;
+        if(currentCall!=null){
+            phoneNumber = currentCall.getDetails().getHandle().getSchemeSpecificPart();
+        }
+        return phoneNumber;
+    }
+
+    public static String getCallType(){
+        String callType=null;
+        if(currentCall!=null) {
+            if (currentCall.getState() == Call.STATE_RINGING) {
+                callType = "Incoming";
+            } else {
+                callType = "Calling...";
+            }
+        }
+        return callType;
     }
 }

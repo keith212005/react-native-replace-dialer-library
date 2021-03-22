@@ -52,6 +52,8 @@ export default class CallScreen extends Component {
     super(props);
 
     console.log('All Params = ', this.props.route.params);
+    // const {callType, phoneNumber} = this.props.route.params;
+
     this.startCallListener();
     this.state = {
       connected: false,
@@ -79,10 +81,18 @@ export default class CallScreen extends Component {
     ReplaceDialer.getCallDetails((callType, bluetoothName, phoneNumber) => {
       console.log('calldetails>>>', callType, bluetoothName, phoneNumber);
       this.setState({
-        callType: callType,
         blutName: bluetoothName,
-        phoneNumber: phoneNumber,
       });
+    });
+    ReplaceDialer.getPhoneNumber((phoneNumber) => {
+      if (phoneNumber != null) {
+        this.setState({phoneNumber: phoneNumber});
+      }
+    });
+    ReplaceDialer.getCallType((callType) => {
+      if (callType != null) {
+        this.setState({callType: callType});
+      }
     });
   }
 
@@ -182,8 +192,11 @@ export default class CallScreen extends Component {
 
   _renderCallAnsweredView = () => {
     return (
-      <TouchableOpacity onPress={() => this._handleCall(constant.REJECTCALL)}>
+      <TouchableOpacity onPress={() => this._handleCall(constant.ENDCALL)}>
         <Image style={styles.endCall} source={{uri: image.endCallButton}} />
+        <Text style={{textAlign: 'center', marginTop: 5}}>
+          {constant.ENDCALL}
+        </Text>
       </TouchableOpacity>
     );
   };
@@ -200,14 +213,21 @@ export default class CallScreen extends Component {
           ReplaceDialer.disconnectCall();
         });
         break;
+      case constant.ENDCALL:
+        this.setState({stopwatchStart: false}, () => {
+          // ReplaceDialer.disconnectCall();
+          ReplaceDialer.disconnectCall();
+        });
+        break;
       case constant.ADD:
-        ReplaceDialer.makeConferenceCall((time) => {
-          console.log('miliseconds>>>>', time);
+        ReplaceDialer.makeConferenceCall((value) => {
+          console.log('makeConferenceCall>>>>', value);
         });
         break;
       case constant.MERGE:
         ReplaceDialer.mergeConferenceCall((value) => {
-          this.setState({merge: value});
+          // this.setState({merge: value});
+          console.log('total >> ', value);
         });
         break;
       case constant.HOLD:

@@ -9,4 +9,5 @@ export const constant = {
   KEYPAD: 'Keypad',
   ACCEPTCALL: 'Accept',
   REJECTCALL: 'Reject',
+  ENDCALL: 'End',
 };
