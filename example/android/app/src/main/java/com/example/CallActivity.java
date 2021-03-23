@@ -91,19 +91,9 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
             @Override
             public void onCallStateChanged(int state, String incomingNumber) {
                 super.onCallStateChanged(state, incomingNumber);
-                System.out.println("kcal : " + state + incomingNumber);
-                Log.d("kcal", "numbersss : " +"state: " +state + "tel:"+incomingNumber);
-                AudioManager manager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-                boolean x = manager.getMode() == AudioManager.MODE_IN_CALL;
-                Log.e("kcal","" + x);
+                Log.d("CallActivity", "state: " +state + "tel:"+incomingNumber);
             }
         }, PhoneStateListener.LISTEN_CALL_STATE);
-    }
-
-    public static void start(Context context, Call call) {
-        Intent intent = new Intent(context, com.example.CallActivity.class)
-                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
     }
 
     @Override
@@ -149,11 +139,5 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
             wakeLock.acquire();
         }
     }
-
-
-
-
-
-
 
 }

@@ -69,8 +69,8 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         return "ReplaceDialer";
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
-    public void openCallActivity(Context applicationContext, Call call) {
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void openCallActivity(Context applicationContext) {
         try {
             Class cls = Class.forName("com.example.CallActivity");
             Intent intent = new Intent(applicationContext, cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -82,7 +82,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     private void getCallDetails(Callback callback) {
         callback.invoke(getBluetoothName());
@@ -121,7 +121,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     public void callPhoneNumber(String phoneNumber, Callback myCallback) {
         Uri uri = Uri.parse("tel:" + phoneNumber.trim());
@@ -142,7 +142,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     public void toggleMute(Callback callback) {
         int state = CallManager.getInstance().getCallState();
@@ -171,7 +171,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         return null;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     public void toggleBluetooth() {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -209,38 +209,38 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         }
     };
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     public void acceptCall() {
          CallManager.getInstance().answer();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     public void getPhoneNumber(Callback callback) {
         callback.invoke( CallManager.getPhoneNumber());
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     public void getCallType(Callback callback) {
         callback.invoke( CallManager.getCallType());
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     public static void getCallState(Callback callback) {
         Integer state = CallManager.getInstance().getCallState();
         callback.invoke(state);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     public void disconnectCall() {
          CallManager.getInstance().hangup();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     public void closeCurrentView() {
         int permissionRecord = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.RECORD_AUDIO);
@@ -253,23 +253,23 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
-    public void mergeConferenceCall(Callback callback) {
-        CallManager.getInstance().merge(true);
+    public void mergeCall(Callback callback) {
+        CallManager.getInstance().merge();
         callback.invoke(true);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     public void makeConferenceCall(Callback callback) {
         TelecomManager telecomManager =
                 (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
         Bundle extras = new Bundle();
-        Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, "07933667777", null);
+        Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, "07961606161", null);
 
         Bundle callExtras = new Bundle();
-        callExtras.putString("phoneNumber", "07933667777");
+        callExtras.putString("phoneNumber", "07961606161");
         extras.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, callExtras);
         if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
             return;
@@ -278,14 +278,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         callback.invoke(true);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
-    @ReactMethod
-    public void mergeCall(Callback callback) {
-        CallManager.getInstance().merge(true);
-        callback.invoke(true);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.R)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @ReactMethod
     public void holdCall(Callback callback) {
         int state = CallManager.getInstance().getCallState();

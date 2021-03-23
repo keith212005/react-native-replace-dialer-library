@@ -19,14 +19,12 @@ import {
   request,
 } from 'react-native-permissions';
 
-import {CustomButton, CallTimer} from '@components';
+import {CustomButton, MyStopwatch2} from '@components';
 import {image, constant} from '@constants';
 import {responsiveFonts, responsiveHeight, responsiveWidth} from '@resources';
 
 import ReplaceDialer from 'react-native-replace-dialer';
 import CallDetectorManager from 'react-native-call-detection';
-import CountDown from 'react-native-countdown-component';
-import {Stopwatch, Timer} from 'react-native-stopwatch-timer';
 
 const img = [
   image.add_b,
@@ -56,11 +54,11 @@ export default class CallScreen extends Component {
 
     this.startCallListener();
     this.state = {
-      connected: false,
       event: '',
       callType: '',
       stopwatchShow: false,
       stopwatchStart: true,
+      stopwatchPause: false,
       phoneNumber: '',
       blutName: constant.BLUT,
       speaker: false,
@@ -116,41 +114,32 @@ export default class CallScreen extends Component {
         console.log('startCallListener2 >> ', event, phoneNumber);
         if (event === 'Disconnected') {
           // Do something call got disconnected
-          this.setState({connected: false, stopwatchStart: false}, () => {
+          this.setState({stopwatchStart: false}, () => {
             setTimeout(() => {
               ReplaceDialer.closeCurrentView();
-            }, 1000);
+            }, 2000);
           });
         } else if (event === 'Connected') {
           // Do something call got connected
           // This clause will only be executed for iOS
-          console.log('Connected...');
-          this.setState({connected: true});
         } else if (event === 'Incoming') {
           // Do something call got incoming
-          console.log('incoming...');
-          this.setState({connected: false});
         } else if (event === 'Dialing') {
           // Do something call got dialing
           // This clause will only be executed for iOS
-          console.log('dialing...');
-          this.setState({connected: false});
         } else if (event === 'Offhook') {
           //Device call state: Off-hook.
           // At least one call exists that is dialing,
           // active, or on hold,
           // and no calls are ringing or waiting.
           // This clause will only be executed for Android
-          console.log('offhook...');
-          this.setState({connected: true});
+          this.setState({stopwatchStart: true});
         } else if (event === 'Missed') {
           // Do something call got missed
           // This clause will only be executed for Android
-          console.log('missed...');
-          this.setState({connected: false});
           setTimeout(() => {
             ReplaceDialer.closeCurrentView();
-          }, 1000);
+          }, 2000);
         }
       },
       true, // if you want to read the phone number of the incoming call [ANDROID], otherwise false
@@ -209,12 +198,12 @@ export default class CallScreen extends Component {
         });
         break;
       case constant.REJECTCALL:
-        this.setState({stopwatchStart: false}, () => {
+        this.setState({stopwatchStart: false, stopwatchPause: true}, () => {
           ReplaceDialer.disconnectCall();
         });
         break;
       case constant.ENDCALL:
-        this.setState({stopwatchStart: false}, () => {
+        this.setState({stopwatchStart: false, stopwatchPause: true}, () => {
           // ReplaceDialer.disconnectCall();
           ReplaceDialer.disconnectCall();
         });
@@ -225,7 +214,7 @@ export default class CallScreen extends Component {
         });
         break;
       case constant.MERGE:
-        ReplaceDialer.mergeConferenceCall((value) => {
+        ReplaceDialer.mergeCall((value) => {
           // this.setState({merge: value});
           console.log('total >> ', value);
         });
@@ -276,6 +265,7 @@ export default class CallScreen extends Component {
       speaker,
       mute,
       stopwatchStart,
+      stopwatchPause,
       stopwatchShow,
       event,
       record,
@@ -300,10 +290,8 @@ export default class CallScreen extends Component {
             </Text>
 
             {/* Show timer when user pick up call */}
+            <MyStopwatch2 start={stopwatchStart} pause={stopwatchPause} />
 
-            {/*
-            {stopwatchShow && <CallTimer stopwatchStart={stopwatchStart} />}
-            */}
             <Text>
               {event == 'Disconnected' || event == 'Missed' ? event : ''}
             </Text>

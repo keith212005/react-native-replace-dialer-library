@@ -16,7 +16,7 @@ import java.util.Set;
 
 import io.reactivex.subjects.BehaviorSubject;
 
-@RequiresApi(api = Build.VERSION_CODES.R)
+
 public class CallManager {
 
     public static BehaviorSubject state = BehaviorSubject.create();
@@ -28,11 +28,15 @@ public class CallManager {
 
     public static CallManager getInstance() {
         if (mInstance == null) {
+            Log.d("CallManager","getting new instance of Call Manager.");
             mInstance = new CallManager();
         }
+        Log.d("CallManager","returning existing instance of Call Manager.");
         return mInstance;
     }
 
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private Object callback = new Call.Callback() {
         @Override
         public void onStateChanged(Call call, int newState) {
@@ -42,41 +46,7 @@ public class CallManager {
         }
     };
 
-//    public static String getPhoneNumber() {
-//        return currentCall.getDetails().getHandle().getSchemeSpecificPart();
-//    }
-
-    public static String getCallId() {
-
-        Bundle bundle = currentCall.getDetails().getExtras();
-        Log.d("Bundle>>","capablities = "+currentCall.getDetails().getCallCapabilities());
-
-        if (bundle != null) {
-            Set<String> keys = bundle.keySet();
-            Iterator<String> it = keys.iterator();
-            Log.d("Bundle>>","Dumping Intent start");
-            while (it.hasNext()) {
-                String key = it.next();
-                Log.d("Bundle>>","[" + key + " = " + bundle.get(key)+"]");
-            }
-            Log.d("Bundle>>","Dumping Intent end");
-        }
-
-        Bundle bundle2 = currentCall.getDetails().getIntentExtras();
-
-        if (bundle2 != null) {
-            Set<String> keys = bundle2.keySet();
-            Iterator<String> it = keys.iterator();
-            Log.d("Bundle>>","Dumping Intent start");
-            while (it.hasNext()) {
-                String key = it.next();
-                Log.d("Bundle2>>","[" + key + " = " + bundle2.get(key)+"]");
-            }
-            Log.d("Bundle2>>","Dumping Intent end");
-        };
-        return "";
-    }
-
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public Call getLastCallInConferenceList(){
         List<Call> conferenceableCalls = currentCall.getConferenceableCalls();
         Call lastCall = null;
@@ -87,36 +57,13 @@ public class CallManager {
         return lastCall;
     }
 
-    public void merge(boolean z2) {
-        boolean z3;
-        Call.Details details;
-        List<Call> conferenceableCalls = currentCall.getConferenceableCalls();
-        Log.d("CallManager","currentcall1"+currentCall.getDetails().getHandle().getSchemeSpecificPart());
-        Log.d("CallManager","currentcall1"+conferenceableCalls.get(0).getDetails().getHandle().getSchemeSpecificPart());
-        if (conferenceableCalls != null && !conferenceableCalls.isEmpty()) {
-            Call call = conferenceableCalls.get(0);
-            Call parent = call.getParent();
-            if (z2) {
-                if (parent == null || (details = parent.getDetails()) == null) {
-                    z3 = false;
-                } else {
-                    z3 = details.can(128);
-                }
-            }
-            Log.d("CallManager","currentcall insideed");
-            currentCall.conference(call);
-        } else {
-            Log.d("CallManager","currentcall2"+currentCall.getDetails().getHandle().getSchemeSpecificPart());
-            currentCall.mergeConference();
-            Log.d("CallManager","currentcall3"+currentCall.getConferenceableCalls().get(0).getDetails().getHandle().getSchemeSpecificPart());
-        }
-    }
 
     public boolean isCallActive(Context context){
         AudioManager manager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
         return manager.getMode() == AudioManager.MODE_IN_CALL;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public final void setCall(@Nullable Call value) {
         if (value != null) {
             state.onNext(value.getState());
@@ -131,6 +78,7 @@ public class CallManager {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public int getCallState(){
         if (currentCall != null) {
             return currentCall.getState();
@@ -142,6 +90,7 @@ public class CallManager {
         return currentCall;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public void answer() {
         assert currentCall != null;
         if(currentCall != null) {
@@ -149,6 +98,7 @@ public class CallManager {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public void hangup() {
         assert currentCall != null;
         if(currentCall != null) {
@@ -165,6 +115,27 @@ public class CallManager {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void merge() {
+        List<Call> conferenceableCalls = currentCall.getConferenceableCalls();
+        Log.d("CallManager","current call number = "+currentCall.getDetails().getHandle().getSchemeSpecificPart());
+
+        if (!conferenceableCalls.isEmpty()) {
+            Call call = conferenceableCalls.get(0);
+            Log.d("CallManager","conferencable call number = "+conferenceableCalls.get(0).getDetails().getHandle().getSchemeSpecificPart());
+            currentCall.conference(call);
+            Log.d("CallManager","after conference number = "+currentCall.getDetails().getHandle().getSchemeSpecificPart());
+        } else {
+            if (currentCall.getDetails().can(Call.Details.CAPABILITY_MERGE_CONFERENCE)) {
+                Log.d("CallManager", "currentcall2" + currentCall.getDetails().getHandle().getSchemeSpecificPart());
+                currentCall.mergeConference();
+                Log.d("CallManager", "currentcall3" + currentCall.getConferenceableCalls().get(0).getDetails().getHandle().getSchemeSpecificPart());
+            }
+        }
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public static void hold() {
         assert currentCall != null;
         if(currentCall != null) {
@@ -172,6 +143,7 @@ public class CallManager {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public static void unhold() {
         assert currentCall != null;
         if(currentCall != null) {
@@ -179,6 +151,7 @@ public class CallManager {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public static String getPhoneNumber(){
         String phoneNumber = null;
         if(currentCall!=null){
@@ -187,6 +160,7 @@ public class CallManager {
         return phoneNumber;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public static String getCallType(){
         String callType=null;
         if(currentCall!=null) {
