@@ -2,6 +2,9 @@ package com.reactlibrary;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.role.RoleManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -38,314 +41,374 @@ import java.util.Set;
 public class ReplaceDialerModule extends ReactContextBaseJavaModule implements PermissionListener,
         LifecycleEventListener, ActivityEventListener {
 
-    private ReactApplicationContext mContext;
+  private ReactApplicationContext mContext;
+  private CallService mContext2;
 
-    // for default dialer
-    AudioManager audioManager;
-    private static final int RC_DEFAULT_PHONE = 3289;
 
-    public ReplaceDialerModule() {
-    }
+  // for default dialer
+  AudioManager audioManager;
+  private static final int RC_DEFAULT_PHONE = 3289;
 
-    public ReplaceDialerModule(ReactApplicationContext context) {
-        super(context);
-        this.mContext = context;
-        audioManager = (AudioManager) this.mContext.getSystemService(Context.AUDIO_SERVICE);
-        audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-        audioManager.setMode(AudioManager.MODE_IN_CALL);
-        this.mContext.addLifecycleEventListener(this);
-        this.mContext.addActivityEventListener(this);
+  public ReplaceDialerModule(CallService callService) {
+    this.mContext2 = callService;
+  }
 
-        //register broadcast receiver for bluetooth
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
-        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
-        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-        mContext.registerReceiver(mReceiver, filter);
-    }
 
-    @Override
-    public String getName() {
-        return "ReplaceDialer";
-    }
+  public ReplaceDialerModule(ReactApplicationContext context) {
+    super(context);
+    this.mContext = context;
+    audioManager = (AudioManager) this.mContext.getSystemService(Context.AUDIO_SERVICE);
+    audioManager.setMode(AudioManager.MODE_IN_CALL); // required
+    Log.d("ReplaceDialer","audio mode = "+audioManager.getMode());
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    public void openCallActivity(Context applicationContext) {
-        try {
-            Class cls = Class.forName("com.example.CallActivity");
-            Intent intent = new Intent(applicationContext, cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    this.mContext.addLifecycleEventListener(this);
+    this.mContext.addActivityEventListener(this);
+
+    //register broadcast receiver for bluetooth
+    IntentFilter filter = new IntentFilter();
+    filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+    filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
+    filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+    mContext.registerReceiver(mReceiver, filter);
+  }
+
+  @Override
+  public String getName() {
+    return "ReplaceDialer";
+  }
+
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  public void openCallActivity(Context applicationContext) {
+    try {
+      Class cls = Class.forName("com.example.CallActivity");
+      Intent intent = new Intent(applicationContext, cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 //            intent.putExtra("phoneNumber",call.getDetails().getHandle().getSchemeSpecificPart());
 //            intent.putExtra("callType",call.getState() == Call.STATE_RINGING ? "Incoming" : "Calling...");
-            applicationContext.startActivity(intent);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+
+
+      //**********
+      PendingIntent pendingIntent = PendingIntent.getActivity(applicationContext, 1, intent, PendingIntent.FLAG_NO_CREATE);
+      // Build the notification as an ongoing high priority item; this ensures it will show as
+      // a heads up notification which slides down over top of the current content.
+      final Notification.Builder builder = new Notification.Builder(applicationContext);
+      builder.setOngoing(true);
+      builder.setPriority(Notification.PRIORITY_HIGH);
+
+      // Set notification content intent to take user to the fullscreen UI if user taps on the
+      // notification body.
+      builder.setContentIntent(pendingIntent);
+      // Set full screen intent to trigger display of the fullscreen UI when the notification
+      // manager deems it appropriate.
+      builder.setFullScreenIntent(pendingIntent, true);
+
+      // Setup notification content.
+      builder.setSmallIcon(R.drawable.redbox_top_border_background);
+      builder.setContentTitle("Your notification title");
+      builder.setContentText("Your notification content.");
+
+      // Use builder.addAction(..) to add buttons to answer or reject the call.
+
+      NotificationManager notificationManager = mContext2.getSystemService(
+              NotificationManager.class);
+      notificationManager.notify(1, builder.build());
+
+      //**********
+
+
+      applicationContext.startActivity(intent);
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
     }
+  }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    private void getCallDetails(Callback callback) {
-        callback.invoke(getBluetoothName());
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  @ReactMethod
+  private void getCallDetails(Callback callback) {
+    callback.invoke(getBluetoothName());
+  }
+
+
+  // returns true if app set as default dialer else false
+  @ReactMethod
+  public void isDefaultDialer(Callback myCallback) {
+    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) {
+      myCallback.invoke(false);
+      return;
     }
-
-
-    // returns true if app set as default dialer else false
-    @ReactMethod
-    public void isDefaultDialer(Callback myCallback) {
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) {
-            myCallback.invoke(false);
-            return;
-        }
-        TelecomManager telecomManager = (TelecomManager) this.mContext.getSystemService(Context.TELECOM_SERVICE);
-        if (telecomManager.getDefaultDialerPackage().equals(this.mContext.getPackageName())) {
-            myCallback.invoke(true);
-        } else {
-            myCallback.invoke(false);
-        }
+    TelecomManager telecomManager = (TelecomManager) this.mContext.getSystemService(Context.TELECOM_SERVICE);
+    if (telecomManager.getDefaultDialerPackage().equals(this.mContext.getPackageName())) {
+      myCallback.invoke(true);
+    } else {
+      myCallback.invoke(false);
     }
+  }
 
-    // set default dialer alert
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    public void setDefaultDialer(Callback myCallback) {
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) {
-            Intent intent = new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER);
-            intent.putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, this.mContext.getPackageName());
-            this.mContext.startActivityForResult(intent, RC_DEFAULT_PHONE, new Bundle());
-            myCallback.invoke(true);
-        } else {
-            RoleManager roleManager = (RoleManager) mContext.getSystemService(Context.ROLE_SERVICE);
-            Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER);
-            mContext.startActivityForResult(intent, RC_DEFAULT_PHONE, new Bundle()); // you need to define CHANGE_DEFAULT_DIALER as a static final int
-            myCallback.invoke(true);
-        }
+  // set default dialer alert
+  @ReactMethod
+  public void setDefaultDialer(Callback myCallback) {
+    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) {
+      Intent intent = new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER);
+      intent.putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, this.mContext.getPackageName());
+      this.mContext.startActivityForResult(intent, RC_DEFAULT_PHONE, new Bundle());
+      myCallback.invoke(true);
+    } else {
+      RoleManager roleManager = (RoleManager) mContext.getSystemService(Context.ROLE_SERVICE);
+      Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER);
+      mContext.startActivityForResult(intent, RC_DEFAULT_PHONE, new Bundle()); // you need to define CHANGE_DEFAULT_DIALER as a static final int
+      myCallback.invoke(true);
     }
+  }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    public void callPhoneNumber(String phoneNumber, Callback myCallback) {
-        Uri uri = Uri.parse("tel:" + phoneNumber.trim());
-        Intent intent = new Intent(Intent.ACTION_CALL, uri);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        this.mContext.startActivity(intent);
-        myCallback.invoke(phoneNumber);
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  @ReactMethod
+  public void callPhoneNumber(String phoneNumber, Callback myCallback) {
+
+    TelecomManager telecomManager =
+            (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
+    Bundle extras = new Bundle();
+    Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, phoneNumber, null);
+
+    Bundle callExtras = new Bundle();
+    callExtras.putString("phoneNumber", phoneNumber);
+    extras.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, callExtras);
+    if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+      return;
     }
+    telecomManager.placeCall(uri, extras);
+    myCallback.invoke(true);
 
-    @ReactMethod
-    public void toggleSpeaker(Callback callback) {
-        if (audioManager.isSpeakerphoneOn()) {
-            audioManager.setSpeakerphoneOn(false);
-            callback.invoke(false);
-        } else {
-            audioManager.setSpeakerphoneOn(true);
-            callback.invoke(true);
-        }
+
+//    Uri uri = Uri.parse("tel:" + phoneNumber.trim());
+//    Intent intent = new Intent(Intent.ACTION_CALL, uri);
+//    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//    this.mContext.startActivity(intent);
+//    myCallback.invoke(phoneNumber);
+  }
+
+
+  @ReactMethod
+  public void toggleSpeaker(Callback callback) {
+    Log.d("ReplaceDailer","speaker on = "+audioManager.isSpeakerphoneOn());
+    if (audioManager.isSpeakerphoneOn()) {
+      audioManager.setSpeakerphoneOn(false);
+
+      callback.invoke(audioManager.isSpeakerphoneOn());
+    } else {
+      audioManager.setSpeakerphoneOn(true);
+      callback.invoke(audioManager.isSpeakerphoneOn());
     }
+  }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    public void toggleMute(Callback callback) {
-        int state = CallManager.getInstance().getCallState();
-        if (state == Call.STATE_ACTIVE) {
-            if (audioManager.isMicrophoneMute()) {
-                audioManager.setMicrophoneMute(false);
-                callback.invoke(false);
-            } else {
-                audioManager.setMicrophoneMute(true);
-                callback.invoke(true);
-            }
-        } else {
-            callback.invoke(false);
-        }
-    }
-
-    @ReactMethod
-    public String getBluetoothName() {
-        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-        if (pairedDevices.size() > 0) {
-            for (BluetoothDevice device : pairedDevices) {
-                return device.getName();
-            }
-        }
-        return null;
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    public void toggleBluetooth() {
-        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (mBluetoothAdapter == null) {
-            // Device does not support Bluetooth
-            Log.d("ReplaceDialer", "Device not supported for bluetooth");
-        } else if (!mBluetoothAdapter.isEnabled()) {
-            // Bluetooth is not enabled :)
-            Log.d("ReplaceDialer", "Bluetooth is not enabled");
-            final Intent intent = new Intent(Intent.ACTION_MAIN, null);
-            intent.addCategory(Intent.CATEGORY_LAUNCHER);
-            ComponentName cn = new ComponentName("com.android.settings",
-                    "com.android.settings.bluetooth.BluetoothSettings");
-            intent.setComponent(cn);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
-        } else {
-            // Bluetooth is enabled
-            Log.d("ReplaceDialer", "Bluetooth is enabled");
-        }
-    }
-
-    //The BroadcastReceiver that listens for bluetooth broadcasts
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
-                //Do something if connected
-                Log.d("ReplaceDialer", "Bluetooth connected........");
-            } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
-                //Do something if disconnected
-                Log.d("ReplaceDialer", "Bluetooth disconnected........");
-            }
-        }
-    };
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    public void acceptCall() {
-         CallManager.getInstance().answer();
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    public void getPhoneNumber(Callback callback) {
-        callback.invoke( CallManager.getPhoneNumber());
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    public void getCallType(Callback callback) {
-        callback.invoke( CallManager.getCallType());
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    public static void getCallState(Callback callback) {
-        Integer state = CallManager.getInstance().getCallState();
-        callback.invoke(state);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    public void disconnectCall() {
-         CallManager.getInstance().hangup();
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    public void closeCurrentView() {
-        int permissionRecord = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.RECORD_AUDIO);
-        if (permissionRecord == PackageManager.PERMISSION_GRANTED) {
-            if (RecordService.getInstance().isRecording == true) {
-                RecordService.getInstance().stopRecording();
-            }
-        }
-        mContext.getCurrentActivity().finishAndRemoveTask();
-    }
-
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    public void mergeCall(Callback callback) {
-        CallManager.getInstance().merge();
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  @ReactMethod
+  public void toggleMute(Callback callback) {
+    int state = CallManager.getInstance().getCallState();
+    if (state == Call.STATE_ACTIVE) {
+      if (audioManager.isMicrophoneMute()) {
+        audioManager.setMicrophoneMute(false);
+        callback.invoke(false);
+      } else {
+        audioManager.setMicrophoneMute(true);
         callback.invoke(true);
+      }
+    } else {
+      callback.invoke(false);
     }
+  }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    public void makeConferenceCall(Callback callback) {
-        TelecomManager telecomManager =
-                (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
-        Bundle extras = new Bundle();
-        Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, "07961606161", null);
+  @ReactMethod
+  public String getBluetoothName() {
+    BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+    if (pairedDevices.size() > 0) {
+      for (BluetoothDevice device : pairedDevices) {
+        return device.getName();
+      }
+    }
+    return null;
+  }
 
-        Bundle callExtras = new Bundle();
-        callExtras.putString("phoneNumber", "07961606161");
-        extras.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, callExtras);
-        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        telecomManager.placeCall(uri, extras);
+
+  @ReactMethod
+  public void toggleBluetooth() {
+    BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    if (mBluetoothAdapter == null) {
+      // Device does not support Bluetooth
+      Log.d("ReplaceDialer", "Device not supported for bluetooth");
+    } else if (!mBluetoothAdapter.isEnabled()) {
+      // Bluetooth is not enabled :)
+      Log.d("ReplaceDialer", "Bluetooth is not enabled");
+      final Intent intent = new Intent(Intent.ACTION_MAIN, null);
+      intent.addCategory(Intent.CATEGORY_LAUNCHER);
+      ComponentName cn = new ComponentName("com.android.settings",
+              "com.android.settings.bluetooth.BluetoothSettings");
+      intent.setComponent(cn);
+      intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      mContext.startActivity(intent);
+    } else {
+      // Bluetooth is enabled
+      Log.d("ReplaceDialer", "Bluetooth is enabled");
+    }
+  }
+
+  //The BroadcastReceiver that listens for bluetooth broadcasts
+  private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      String action = intent.getAction();
+      if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
+        //Do something if connected
+        Log.d("ReplaceDialer", "Bluetooth connected........");
+      } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
+        //Do something if disconnected
+        Log.d("ReplaceDialer", "Bluetooth disconnected........");
+      }
+    }
+  };
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  @ReactMethod
+  public void acceptCall() {
+    CallManager.getInstance().answer();
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  @ReactMethod
+  public void getPhoneNumber(Callback callback) {
+    callback.invoke(CallManager.getPhoneNumber());
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  @ReactMethod
+  public void getCallType(Callback callback) {
+    callback.invoke(CallManager.getCallType());
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  @ReactMethod
+  public static void getCallState(Callback callback) {
+    Integer state = CallManager.getInstance().getCallState();
+    callback.invoke(state);
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  @ReactMethod
+  public void disconnectCall() {
+    CallManager.getInstance().hangup();
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  @ReactMethod
+  public void closeCurrentView() {
+    int permissionRecord = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.RECORD_AUDIO);
+    if (permissionRecord == PackageManager.PERMISSION_GRANTED) {
+      if (RecordService.getInstance().isRecording == true) {
+        RecordService.getInstance().stopRecording();
+      }
+    }
+    mContext.getCurrentActivity().finishAndRemoveTask();
+  }
+
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  @ReactMethod
+  public void mergeCall(Callback callback) {
+    CallManager.getInstance().merge();
+    callback.invoke(true);
+  }
+
+//  @RequiresApi(api = Build.VERSION_CODES.M)
+//  @ReactMethod
+//  public void makeConferenceCall(Callback callback) {
+//    TelecomManager telecomManager =
+//            (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
+//    Bundle extras = new Bundle();
+//    Uri uri = Uri.fromParts(PhoneAccount.SCHEME_TEL, "07961606161", null);
+//
+//    Bundle callExtras = new Bundle();
+//    callExtras.putString("phoneNumber", "07961606161");
+//    extras.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, callExtras);
+//    if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+//      return;
+//    }
+//    telecomManager.placeCall(uri, extras);
+//    callback.invoke(true);
+//  }
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  @ReactMethod
+  public void holdCall(Callback callback) {
+    int state = CallManager.getInstance().getCallState();
+    if (state == Call.STATE_HOLDING) {
+      CallManager.unhold();
+      callback.invoke(false);
+    } else if (state == Call.STATE_ACTIVE) {
+      CallManager.hold();
+      callback.invoke(true);
+    } else {
+      callback.invoke(false);
+    }
+  }
+
+  @ReactMethod
+  public void recordCall(Callback callback) {
+    int ALL_PERMISSIONS = 101;
+    final String[] permissions = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+    ActivityCompat.requestPermissions(getCurrentActivity(), permissions, ALL_PERMISSIONS);
+
+    int permissionRecord = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.RECORD_AUDIO);
+    int permissionStorage = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+    if (permissionRecord == PackageManager.PERMISSION_GRANTED && permissionStorage == PackageManager.PERMISSION_GRANTED) {
+      if (!RecordService.getInstance().isRecording) {
+        RecordService.getInstance().startRecording();
         callback.invoke(true);
+      } else {
+        RecordService.getInstance().stopRecording();
+        callback.invoke(false);
+      }
+    } else {
+      callback.invoke(false);
     }
+  }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @ReactMethod
-    public void holdCall(Callback callback) {
-        int state = CallManager.getInstance().getCallState();
-        if (state == Call.STATE_HOLDING) {
-            CallManager.unhold();
-            callback.invoke(false);
-        } else if(state == Call.STATE_ACTIVE){
-            CallManager.hold();
-            callback.invoke(true);
-        } else {
-            callback.invoke(false);
+  public static boolean hasPermissions(Context context, String... permissions) {
+    if (context != null && permissions != null) {
+      for (String permission : permissions) {
+        if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+          return false;
         }
+      }
     }
+    return true;
+  }
 
-    @ReactMethod
-    public void recordCall(Callback callback) {
-        int ALL_PERMISSIONS = 101;
-        final String[] permissions = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-        ActivityCompat.requestPermissions(getCurrentActivity(), permissions, ALL_PERMISSIONS);
+  @Override
+  public void onHostResume() {
+  }
 
-        int permissionRecord = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.RECORD_AUDIO);
-        int permissionStorage = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if (permissionRecord == PackageManager.PERMISSION_GRANTED && permissionStorage == PackageManager.PERMISSION_GRANTED) {
-            if (!RecordService.getInstance().isRecording) {
-                RecordService.getInstance().startRecording();
-                callback.invoke(true);
-            } else {
-                RecordService.getInstance().stopRecording();
-                callback.invoke(false);
-            }
-        } else {
-            callback.invoke(false);
-        }
-    }
+  @Override
+  public void onHostPause() {
+  }
 
-    public static boolean hasPermissions(Context context, String... permissions) {
-        if (context != null && permissions != null) {
-            for (String permission : permissions) {
-                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
+  @Override
+  public void onHostDestroy() {
+  }
 
-    @Override
-    public void onHostResume() { }
+  @Override
+  public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
+    Log.d("c", "onActivityResult called ... " + requestCode + resultCode);
+  }
 
-    @Override
-    public void onHostPause() {}
+  @Override
+  public void onNewIntent(Intent intent) {
+  }
 
-    @Override
-    public void onHostDestroy() { }
-
-    @Override
-    public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
-        Log.d("c","onActivityResult called ... "+ requestCode + resultCode );
-    }
-
-    @Override
-    public void onNewIntent(Intent intent) { }
-
-    @Override
-    public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        Log.d("Permissions>>",""+requestCode);
-        return true;
-    }
+  @Override
+  public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    Log.d("Permissions>>", "" + requestCode);
+    return true;
+  }
 }
 

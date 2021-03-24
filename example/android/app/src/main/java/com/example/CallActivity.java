@@ -35,7 +35,8 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
     private PowerManager.WakeLock wakeLock;
     private int field = 0x00000020;
     // ----------------------------------------------
-    @RequiresApi(api = Build.VERSION_CODES.R)
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

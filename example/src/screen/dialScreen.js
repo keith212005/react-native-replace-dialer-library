@@ -110,6 +110,9 @@ export default class DialScreen extends Component<{}> {
           {
             ReplaceDialer.callPhoneNumber(phoneNumber, (message) => {
               console.log(message);
+              if (message) {
+                this.props.navigation.goBack();
+              }
             });
           }
           break;

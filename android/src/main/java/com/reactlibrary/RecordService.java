@@ -2,6 +2,7 @@ package com.reactlibrary;
 
 import android.media.MediaRecorder;
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +50,8 @@ public class RecordService {
             recorder.prepare();
             recorder.start();
             isRecording = true;
+            Log.d("RecordService","Recording stated...");
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -61,6 +64,7 @@ public class RecordService {
             recorder.release();
             recorder = null;
             isRecording = false;
+            Log.d("RecordService","Recording stopped...");
         }
     }
 

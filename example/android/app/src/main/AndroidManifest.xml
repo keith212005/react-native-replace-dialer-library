@@ -4,6 +4,10 @@
 
 
     <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+    <uses-permission android:name="android.permission.NEW_OUTGOING_CALL" />
+    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
     <uses-permission android:name="android.permission.READ_CALL_LOG"/>
@@ -12,46 +16,29 @@
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS"/>
     <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
-<!--    <uses-permission android:name="android.permission.GET_ACCOUNTS_PRIVILEGED"/>-->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.NFC"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
-<!--    <uses-permission android:name="android.permission.MODIFY_PHONE_STATE"/>-->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-<!--    <uses-permission android:name="android.permission.WRITE_SETTINGS"/>-->
     <uses-permission android:name="android.permission.USE_CREDENTIALS"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
-    <uses-permission android:name="com.android.voicemail.permission.ADD_VOICEMAIL"/>
-<!--    <uses-permission android:name="com.android.voicemail.permission.WRITE_VOICEMAIL"/>-->
-<!--    <uses-permission android:name="com.android.voicemail.permission.READ_VOICEMAIL"/>-->
-<!--    <uses-permission android:name="android.permission.ALLOW_ANY_CODEC_FOR_PLAYBACK"/>-->
-    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
+    <uses-permission android:name="android.voicemail.permission.ADD_VOICEMAIL"/>
+    <uses-permission android:name="android.launcher.permission.INSTALL_SHORTCUT"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.BROADCAST_STICKY"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.SEND_SMS"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-<!--    <uses-permission android:name="android.permission.CONNECTIVITY_USE_RESTRICTED_NETWORKS"/>-->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
-<!--    <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE"/>-->
-<!--    <uses-permission android:name="android.permission.CONTROL_INCALL_EXPERIENCE"/>-->
-    <!-- We use this to disable the status bar buttons of home, back and recent
-    during an incoming call. By doing so this allows us to not show the user
-    is viewing the activity in full screen alert, on a fresh system/factory
-    reset state of the app. -->
-<!--    <uses-permission android:name="android.permission.STATUS_BAR"/>-->
     <uses-permission android:name="android.permission.CAMERA"/>
-    <!-- This tells the activity manager to not delay any of our activity
-     start requests, even if they happen immediately after the user
-     presses home. -->
-<!--    <uses-permission android:name="android.permission.STOP_APP_SWITCHES"/>-->
-    <!-- Permissions needed for badger count showing on launch icon. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <!--for Samsung-->
     <uses-permission android:name="com.sec.android.provider.badge.permission.READ"/>
     <uses-permission android:name="com.sec.android.provider.badge.permission.WRITE"/>
@@ -74,42 +61,6 @@
     <!--for OPPO-->
     <uses-permission android:name="com.oppo.launcher.permission.READ_SETTINGS"/>
     <uses-permission android:name="com.oppo.launcher.permission.WRITE_SETTINGS"/>
-
-
-
-
-
-
-
-
-
-
-
-<!--    <uses-permission android:name="android.permission.INTERNET" />-->
-<!--    <uses-permission android:name="android.permission.CALL_PHONE" />-->
-<!--    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />-->
-<!--    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />-->
-<!--    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>-->
-<!--    <uses-permission android:name="android.permission.BLUETOOTH"/>-->
-
-
-<!--    &lt;!&ndash;    For android 9 and higher to get incoming phone number&ndash;&gt;-->
-<!--    <uses-permission android:name="android.permission.READ_CALL_LOG"/>-->
-
-<!--    &lt;!&ndash;    For android 9 and higher to get outgoing phone number&ndash;&gt;-->
-<!--    <uses-permission android:name="android.permission.NEW_OUTGOING_CALL" />-->
-<!--    <uses-permission android:name="android.permission.READ_PHONE_STATE" />-->
-
-<!--    &lt;!&ndash;    access proximity sensor and turn off display when phone is placed near to face&ndash;&gt;-->
-<!--    <uses-permission android:name="android.permission.WAKE_LOCK" />-->
-
-<!--    &lt;!&ndash;    To store recorded calls &ndash;&gt;-->
-<!--    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="replace" />-->
-<!--    <uses-permission android:name="android.permission.RECORD_AUDIO" />-->
-
-<!--    &lt;!&ndash;    For foreground service &ndash;&gt;-->
-<!--    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />-->
-
 
 
     <application
@@ -191,6 +142,8 @@
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/accessibility_service_config" />
         </service>
         <!-- Accessibility Service -->
+
+
     </application>
 
 </manifest>

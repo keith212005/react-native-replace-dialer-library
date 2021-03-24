@@ -101,7 +101,6 @@ export default class CallScreen extends Component {
   startCallListener() {
     this.callDetector = new CallDetectorManager(
       (event, phoneNumber) => {
-        console.log('call listener event = ', event);
         this.setState({event: event});
 
         // For iOS event will be either "Connected",
@@ -111,10 +110,10 @@ export default class CallScreen extends Component {
         // "Disconnected", "Incoming" or "Missed"
         // phoneNumber should store caller/called number
 
-        console.log('startCallListener2 >> ', event, phoneNumber);
+        console.log('startCallListener >> ', event, phoneNumber);
         if (event === 'Disconnected') {
           // Do something call got disconnected
-          this.setState({stopwatchStart: false}, () => {
+          this.setState({stopwatchPause: true}, () => {
             setTimeout(() => {
               ReplaceDialer.closeCurrentView();
             }, 2000);
@@ -133,7 +132,7 @@ export default class CallScreen extends Component {
           // active, or on hold,
           // and no calls are ringing or waiting.
           // This clause will only be executed for Android
-          this.setState({stopwatchStart: true});
+          this.setState({stopwatchShow: true, stopwatchStart: true});
         } else if (event === 'Missed') {
           // Do something call got missed
           // This clause will only be executed for Android
@@ -209,9 +208,10 @@ export default class CallScreen extends Component {
         });
         break;
       case constant.ADD:
-        ReplaceDialer.makeConferenceCall((value) => {
-          console.log('makeConferenceCall>>>>', value);
-        });
+        this.props.navigation.navigate('DialScreen');
+        // ReplaceDialer.makeConferenceCall((value) => {
+        //   console.log('makeConferenceCall>>>>', value);
+        // });
         break;
       case constant.MERGE:
         ReplaceDialer.mergeCall((value) => {
@@ -290,7 +290,9 @@ export default class CallScreen extends Component {
             </Text>
 
             {/* Show timer when user pick up call */}
-            <MyStopwatch2 start={stopwatchStart} pause={stopwatchPause} />
+            {stopwatchShow && (
+              <MyStopwatch2 start={stopwatchStart} pause={stopwatchPause} />
+            )}
 
             <Text>
               {event == 'Disconnected' || event == 'Missed' ? event : ''}
