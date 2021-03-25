@@ -43,6 +43,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
   private ReactApplicationContext mContext;
   private CallService mContext2;
+  String TAG = "ReplaceDialer";
 
 
   // for default dialer
@@ -59,7 +60,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     this.mContext = context;
     audioManager = (AudioManager) this.mContext.getSystemService(Context.AUDIO_SERVICE);
     audioManager.setMode(AudioManager.MODE_IN_CALL); // required
-    Log.d("ReplaceDialer","audio mode = "+audioManager.getMode());
+    Log.d(TAG,"audio mode = "+audioManager.getMode());
 
     this.mContext.addLifecycleEventListener(this);
     this.mContext.addActivityEventListener(this);
@@ -85,37 +86,6 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
       Intent intent = new Intent(applicationContext, cls).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 //            intent.putExtra("phoneNumber",call.getDetails().getHandle().getSchemeSpecificPart());
 //            intent.putExtra("callType",call.getState() == Call.STATE_RINGING ? "Incoming" : "Calling...");
-
-
-      //**********
-      PendingIntent pendingIntent = PendingIntent.getActivity(applicationContext, 1, intent, PendingIntent.FLAG_NO_CREATE);
-      // Build the notification as an ongoing high priority item; this ensures it will show as
-      // a heads up notification which slides down over top of the current content.
-      final Notification.Builder builder = new Notification.Builder(applicationContext);
-      builder.setOngoing(true);
-      builder.setPriority(Notification.PRIORITY_HIGH);
-
-      // Set notification content intent to take user to the fullscreen UI if user taps on the
-      // notification body.
-      builder.setContentIntent(pendingIntent);
-      // Set full screen intent to trigger display of the fullscreen UI when the notification
-      // manager deems it appropriate.
-      builder.setFullScreenIntent(pendingIntent, true);
-
-      // Setup notification content.
-      builder.setSmallIcon(R.drawable.redbox_top_border_background);
-      builder.setContentTitle("Your notification title");
-      builder.setContentText("Your notification content.");
-
-      // Use builder.addAction(..) to add buttons to answer or reject the call.
-
-      NotificationManager notificationManager = mContext2.getSystemService(
-              NotificationManager.class);
-      notificationManager.notify(1, builder.build());
-
-      //**********
-
-
       applicationContext.startActivity(intent);
     } catch (ClassNotFoundException e) {
       e.printStackTrace();
@@ -190,7 +160,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
   @ReactMethod
   public void toggleSpeaker(Callback callback) {
-    Log.d("ReplaceDailer","speaker on = "+audioManager.isSpeakerphoneOn());
+    Log.d(TAG,"speaker on = "+audioManager.isSpeakerphoneOn());
     if (audioManager.isSpeakerphoneOn()) {
       audioManager.setSpeakerphoneOn(false);
 
@@ -236,10 +206,10 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     if (mBluetoothAdapter == null) {
       // Device does not support Bluetooth
-      Log.d("ReplaceDialer", "Device not supported for bluetooth");
+      Log.d(TAG, "Device not supported for bluetooth");
     } else if (!mBluetoothAdapter.isEnabled()) {
       // Bluetooth is not enabled :)
-      Log.d("ReplaceDialer", "Bluetooth is not enabled");
+      Log.d(TAG, "Bluetooth is not enabled");
       final Intent intent = new Intent(Intent.ACTION_MAIN, null);
       intent.addCategory(Intent.CATEGORY_LAUNCHER);
       ComponentName cn = new ComponentName("com.android.settings",
@@ -249,7 +219,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
       mContext.startActivity(intent);
     } else {
       // Bluetooth is enabled
-      Log.d("ReplaceDialer", "Bluetooth is enabled");
+      Log.d(TAG, "Bluetooth is enabled");
     }
   }
 
@@ -260,10 +230,10 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
       String action = intent.getAction();
       if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
         //Do something if connected
-        Log.d("ReplaceDialer", "Bluetooth connected........");
+        Log.d(TAG, "Bluetooth connected........");
       } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
         //Do something if disconnected
-        Log.d("ReplaceDialer", "Bluetooth disconnected........");
+        Log.d(TAG, "Bluetooth disconnected........");
       }
     }
   };
@@ -398,7 +368,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
   @Override
   public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
-    Log.d("c", "onActivityResult called ... " + requestCode + resultCode);
+    Log.d(TAG, "onActivityResult called ... " + requestCode + resultCode);
   }
 
   @Override
@@ -407,7 +377,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
   @Override
   public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-    Log.d("Permissions>>", "" + requestCode);
+    Log.d(TAG, "requestCode = " + requestCode);
     return true;
   }
 }

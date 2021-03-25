@@ -38,7 +38,7 @@ export default class DialScreen extends Component<{}> {
     super(props);
   }
   state = {
-    phoneNumber: '9409005997',
+    phoneNumber: '07933667777',
     speakerStatus: false,
     alertShow: false,
     alertMessage: '',

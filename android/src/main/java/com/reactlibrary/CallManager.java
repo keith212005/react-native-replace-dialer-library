@@ -6,6 +6,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.telecom.Call;
 import android.telecom.VideoProfile;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -22,6 +24,7 @@ public class CallManager {
 
   public static BehaviorSubject state = BehaviorSubject.create();
 
+
   private static Call currentCall;
   private static CallManager mInstance;
   String TAG = "CallManager";
@@ -36,7 +39,6 @@ public class CallManager {
     return mInstance;
   }
 
-
   @RequiresApi(api = Build.VERSION_CODES.M)
   private Object callback = new Call.Callback() {
     @Override
@@ -46,6 +48,7 @@ public class CallManager {
       state.onNext(newState);
     }
   };
+
 
   @RequiresApi(api = Build.VERSION_CODES.M)
   public Call getLastCallInConferenceList() {
@@ -171,4 +174,6 @@ public class CallManager {
     }
     return callType;
   }
+
+
 }
