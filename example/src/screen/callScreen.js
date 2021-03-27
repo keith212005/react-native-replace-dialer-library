@@ -53,6 +53,7 @@ export default class CallScreen extends Component {
     // const {callType, phoneNumber} = this.props.route.params;
 
     this.startCallListener();
+
     this.state = {
       event: '',
       callType: '',
@@ -132,7 +133,9 @@ export default class CallScreen extends Component {
           // active, or on hold,
           // and no calls are ringing or waiting.
           // This clause will only be executed for Android
-          this.setState({stopwatchShow: true, stopwatchStart: true});
+          this.setState({stopwatchShow: true, stopwatchStart: true}, () => {
+            ReplaceDialer.startProximitySensor();
+          });
         } else if (event === 'Missed') {
           // Do something call got missed
           // This clause will only be executed for Android

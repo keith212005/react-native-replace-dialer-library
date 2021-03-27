@@ -2,6 +2,7 @@ package com.reactlibrary;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -14,11 +15,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.telecom.Call;
+import android.telecom.CallAudioState;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
 import android.util.Log;
@@ -37,21 +41,33 @@ import com.facebook.react.modules.core.PermissionListener;
 
 import java.util.Set;
 
+import okhttp3.internal.connection.RouteSelector;
+
+import static android.content.Context.POWER_SERVICE;
+import static android.media.AudioManager.GET_DEVICES_OUTPUTS;
+
 
 public class ReplaceDialerModule extends ReactContextBaseJavaModule implements PermissionListener,
         LifecycleEventListener, ActivityEventListener {
 
   private ReactApplicationContext mContext;
-  private CallService mContext2;
+  private CallService callServiceContext;
+  private CallService callService;
   String TAG = "ReplaceDialer";
 
+  // Poximity Sensor configuration
+  int field = 0x00000020;
+  PowerManager powerManager;
+  PowerManager.WakeLock wakeLock;
+  // Poximity Sensor
 
   // for default dialer
-  AudioManager audioManager;
+  AudioManager audioManager, audioManager2;
   private static final int RC_DEFAULT_PHONE = 3289;
 
   public ReplaceDialerModule(CallService callService) {
-    this.mContext2 = callService;
+    this.callServiceContext = callService;
+    audioManager = (AudioManager) this.callServiceContext.getSystemService(Context.AUDIO_SERVICE);
   }
 
 
@@ -59,8 +75,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
     super(context);
     this.mContext = context;
     audioManager = (AudioManager) this.mContext.getSystemService(Context.AUDIO_SERVICE);
-    audioManager.setMode(AudioManager.MODE_IN_CALL); // required
-    Log.d(TAG,"audio mode = "+audioManager.getMode());
+    Log.d(TAG, "audio mode = " + audioManager.getMode());
 
     this.mContext.addLifecycleEventListener(this);
     this.mContext.addActivityEventListener(this);
@@ -157,35 +172,47 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 //    myCallback.invoke(phoneNumber);
   }
 
+  private boolean isMyServiceRunning(Class<?> serviceClass) {
+    ActivityManager manager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+    for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+      if (serviceClass.getName().equals(service.service.getClassName())) {
+        return true;
+      }
+    }
+    return false;
+  }
 
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
   @ReactMethod
   public void toggleSpeaker(Callback callback) {
-    Log.d(TAG,"speaker on = "+audioManager.isSpeakerphoneOn());
-    if (audioManager.isSpeakerphoneOn()) {
-      audioManager.setSpeakerphoneOn(false);
+    boolean isSpeakerOn = audioManager.isSpeakerphoneOn();
+    int earpeice = CallAudioState.ROUTE_WIRED_OR_EARPIECE;
+    int speaker = CallAudioState.ROUTE_SPEAKER;
 
-      callback.invoke(audioManager.isSpeakerphoneOn());
+    if (android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.P) {
+      Log.d(TAG, "for Android R");
+      CallService.getInstance().setAudioRoute(isSpeakerOn ? earpeice : speaker);
     } else {
-      audioManager.setSpeakerphoneOn(true);
-      callback.invoke(audioManager.isSpeakerphoneOn());
+      Log.d(TAG, "Android P");
+      audioManager.setSpeakerphoneOn(!isSpeakerOn);
     }
+    callback.invoke(!audioManager.isSpeakerphoneOn());
   }
 
   @RequiresApi(api = Build.VERSION_CODES.M)
   @ReactMethod
   public void toggleMute(Callback callback) {
-    int state = CallManager.getInstance().getCallState();
-    if (state == Call.STATE_ACTIVE) {
-      if (audioManager.isMicrophoneMute()) {
-        audioManager.setMicrophoneMute(false);
-        callback.invoke(false);
+    boolean callExists = CallManager.getInstance().doesCallExists();
+    boolean isMute = audioManager.isMicrophoneMute();
+    if (callExists) {
+      if (android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.P) {
+        CallService.getInstance().setMuted(!isMute);
       } else {
-        audioManager.setMicrophoneMute(true);
-        callback.invoke(true);
+        audioManager.setMicrophoneMute(!isMute);
       }
-    } else {
-      callback.invoke(false);
     }
+    callback.invoke(isMute);
   }
 
   @ReactMethod
@@ -198,6 +225,27 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
       }
     }
     return null;
+  }
+
+  @ReactMethod
+  private void startProximitySensor() {
+
+    try {
+      field = PowerManager.class.getClass().getField("PROXIMITY_SCREEN_OFF_WAKE_LOCK").getInt(null);
+    } catch (Throwable ignored) {
+
+    }
+    powerManager = (PowerManager) mContext.getSystemService(POWER_SERVICE);
+    wakeLock = powerManager.newWakeLock(field, mContext.getCurrentActivity().getLocalClassName());
+    if (!wakeLock.isHeld()) {
+      wakeLock.acquire();
+    }
+  }
+
+  private void stopProximitySensor(){
+    if (wakeLock != null && wakeLock.isHeld()) {
+      wakeLock.release();
+    }
   }
 
 
@@ -278,6 +326,7 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
         RecordService.getInstance().stopRecording();
       }
     }
+    stopProximitySensor();
     mContext.getCurrentActivity().finishAndRemoveTask();
   }
 
@@ -324,23 +373,23 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
   @ReactMethod
   public void recordCall(Callback callback) {
-    int ALL_PERMISSIONS = 101;
-    final String[] permissions = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-    ActivityCompat.requestPermissions(getCurrentActivity(), permissions, ALL_PERMISSIONS);
-
-    int permissionRecord = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.RECORD_AUDIO);
-    int permissionStorage = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
-    if (permissionRecord == PackageManager.PERMISSION_GRANTED && permissionStorage == PackageManager.PERMISSION_GRANTED) {
-      if (!RecordService.getInstance().isRecording) {
-        RecordService.getInstance().startRecording();
-        callback.invoke(true);
-      } else {
-        RecordService.getInstance().stopRecording();
-        callback.invoke(false);
-      }
-    } else {
-      callback.invoke(false);
-    }
+//    int ALL_PERMISSIONS = 101;
+//    final String[] permissions = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+//    ActivityCompat.requestPermissions(getCurrentActivity(), permissions, ALL_PERMISSIONS);
+//
+//    int permissionRecord = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.RECORD_AUDIO);
+//    int permissionStorage = ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+//    if (permissionRecord == PackageManager.PERMISSION_GRANTED && permissionStorage == PackageManager.PERMISSION_GRANTED) {
+//      if (!RecordService.getInstance().isRecording) {
+//        RecordService.getInstance().startRecording();
+//        callback.invoke(true);
+//      } else {
+//        RecordService.getInstance().stopRecording();
+//        callback.invoke(false);
+//      }
+//    } else {
+//      callback.invoke(false);
+//    }
   }
 
   public static boolean hasPermissions(Context context, String... permissions) {
@@ -356,10 +405,16 @@ public class ReplaceDialerModule extends ReactContextBaseJavaModule implements P
 
   @Override
   public void onHostResume() {
+    if (wakeLock != null && !wakeLock.isHeld()) {
+      wakeLock.acquire();
+    }
   }
 
   @Override
   public void onHostPause() {
+    if (wakeLock != null && wakeLock.isHeld()) {
+      wakeLock.release();
+    }
   }
 
   @Override

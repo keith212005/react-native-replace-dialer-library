@@ -44,9 +44,6 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
         // Phone state listener
         startPhoneStateListener();
 
-        // Start Proximity sensor
-        startProximitySensorService();
-
         SoLoader.init(this, false);
         ReactRootView mReactRootView = new ReactRootView(this);
         List<ReactPackage> packages = new PackageList(getApplication()).getPackages();
@@ -71,19 +68,6 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
 
         // this will show incoming screen while device is locked
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
-    }
-
-    private void startProximitySensorService() {
-        try {
-            field = PowerManager.class.getClass().getField("PROXIMITY_SCREEN_OFF_WAKE_LOCK").getInt(null);
-        } catch (Throwable ignored) {
-        }
-
-        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(field, getLocalClassName());
-        if (!wakeLock.isHeld()) {
-            wakeLock.acquire();
-        }
     }
 
     public void startPhoneStateListener() {
@@ -120,25 +104,16 @@ public class CallActivity extends Activity implements DefaultHardwareBackBtnHand
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (wakeLock.isHeld()) {
-            wakeLock.release();
-        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (wakeLock.isHeld()) {
-            wakeLock.release();
-        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (!wakeLock.isHeld()) {
-            wakeLock.acquire();
-        }
     }
 
 }

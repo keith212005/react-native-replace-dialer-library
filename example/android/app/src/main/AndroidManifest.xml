@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.NEW_OUTGOING_CALL" />
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
     <uses-permission android:name="android.permission.READ_CALL_LOG"/>
@@ -22,7 +23,6 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.NFC"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.USE_CREDENTIALS"/>
@@ -108,21 +108,17 @@
       <!-- ReplaceDialer Service -->
               <service
                   android:name="com.reactlibrary.CallService"
-                  android:permission="android.permission.BIND_INCALL_SERVICE">
+                  android:permission="android.permission.BIND_INCALL_SERVICE"
+                  android:enabled="true"
+                  android:exported="true">
                   <meta-data
                       android:name="android.telecom.IN_CALL_SERVICE_UI"
                       android:value="true" />
 
                   <intent-filter>
                       <action android:name="android.telecom.InCallService" />
-                  </intent-filter>
-
-                  <intent-filter>
                       <action android:name="android.intent.action.NEW_OUTGOING_CALL" />
                       <action android:name="android.intent.action.PRECISE_CALL_STATE" />
-                  </intent-filter>
-
-                  <intent-filter>
                       <action android:name="android.intent.action.PHONE_STATE" />
                   </intent-filter>
               </service>
@@ -130,19 +126,19 @@
        <activity android:name=".CallActivity"/>
 
 
-        <!-- Accessibility Service -->
-        <service
-            android:name=".MyAccessibilityService"
-            android:label="@string/app_name"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data android:name="android.accessibilityservice" android:resource="@xml/accessibility_service_config" />
-        </service>
-        <!-- Accessibility Service -->
+<!--        &lt;!&ndash; Accessibility Service &ndash;&gt;-->
+<!--        <service-->
+<!--            android:name=".MyAccessibilityService"-->
+<!--            android:label="@string/app_name"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="true"-->
+<!--            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.accessibilityservice.AccessibilityService" />-->
+<!--            </intent-filter>-->
+<!--            <meta-data android:name="android.accessibilityservice" android:resource="@xml/accessibility_service_config" />-->
+<!--        </service>-->
+<!--        &lt;!&ndash; Accessibility Service &ndash;&gt;-->
 
 
     </application>

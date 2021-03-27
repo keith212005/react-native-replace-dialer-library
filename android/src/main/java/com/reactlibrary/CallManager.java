@@ -46,6 +46,7 @@ public class CallManager {
       Log.d(TAG, "new call state = " + newState);
       super.onStateChanged(call, newState);
       state.onNext(newState);
+
     }
   };
 
@@ -65,6 +66,10 @@ public class CallManager {
   public boolean isCallActive(Context context) {
     AudioManager manager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
     return manager.getMode() == AudioManager.MODE_IN_CALL;
+  }
+
+  public boolean doesCallExists(){
+    return currentCall != null;
   }
 
   @RequiresApi(api = Build.VERSION_CODES.M)

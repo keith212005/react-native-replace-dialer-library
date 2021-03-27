@@ -38,7 +38,7 @@ export default class DialScreen extends Component<{}> {
     super(props);
   }
   state = {
-    phoneNumber: '07933667777',
+    phoneNumber: '9409012729',
     speakerStatus: false,
     alertShow: false,
     alertMessage: '',
@@ -62,8 +62,7 @@ export default class DialScreen extends Component<{}> {
         });
       }
     });
-
-    // this.checkPermissions();
+    this.checkPermissions();
   }
 
   requestMultiplePermissions() {
